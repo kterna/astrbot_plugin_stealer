@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.6] - 2026-06-04
+
+### fix
+- 修复 `_enforce_capacity` 只删索引不删文件：返回值 `files_to_delete` 被所有调用方忽略，导致容量控制循环和 `/meme capacity` 命令均沦为"索引清理表演"，磁盘文件持续堆积
+- 修复重建索引无视容量限制：`rebuild_index` 扫描全部文件后直接入库，完全不检查 `max_reg_num`，重建后索引瞬间突破限制
+- 修复 `_enforce_capacity` 原子性缺陷：原代码先 `del` 索引再删文件，文件删除失败后产生新的僵尸文件且下次循环不再清理；改为先删文件、成功后才删索引
+- 修复 `_restore_metadata` 滥发 `True`：只要旧数据是 dict 就返回成功，空 `{}` 也算恢复；改为仅当真正写入了 `desc`/`tags`/`source`/`scenes` 等字段时才返回 `True`
+- 修复 `recovered_count` 统计时机错误：在容量控制前统计，包含了后来被物理删除的文件；改为容量控制后重新统计最终保留的文件
+- 修复重建索引统计文案 misleading：`"当前索引数量"` 实为重建前旧数据汇总，改为 `"重建前旧数据"` 和 `"重建后索引/文件"`
+
+### refactor
+- `core/events/event_handler.py`：统一使用 `pathlib.Path` 替代 `os.path`（`basename`/`join`/`exists`）
+
 ## [2.6.5] - 2026-06-01
 
 ### fix

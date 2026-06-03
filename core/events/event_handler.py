@@ -1,8 +1,8 @@
 import asyncio
-import os
 import random
 import threading
 import time
+from pathlib import Path
 from typing import Any
 
 from astrbot.api import logger
@@ -179,42 +179,73 @@ class EventHandler:
         return image_items[:remove_count]
 
     async def _enforce_capacity(self, image_index: dict) -> list[str]:
-        """容量控制，删除索引条目并返回需要删除的文件路径。
+        """容量控制，删除超出限制的最旧表情包（文件+索引一起清理）。
 
         Args:
             image_index: 索引字典
 
         Returns:
-            list[str]: 需要删除的文件路径列表
+            list[str]: 成功删除的文件路径列表
         """
-        files_to_delete = []
+        files_actually_deleted: list[str] = []
 
         try:
             items_to_remove = self._select_items_for_removal(image_index)
             if not items_to_remove:
-                return files_to_delete
+                return files_actually_deleted
 
             logger.info(f"[容量控制-索引] 将删除 {len(items_to_remove)} 个最旧条目")
 
             for remove_path, _ in items_to_remove:
-                if remove_path in image_index:
-                    files_to_delete.append(remove_path)
+                if remove_path not in image_index:
+                    continue
 
-                    if isinstance(image_index[remove_path], dict):
-                        category = image_index[remove_path].get("category", "")
-                        if category and self.plugin.base_dir:
-                            file_name = os.path.basename(remove_path)
-                            category_file_path = os.path.join(
-                                self.plugin.base_dir, "categories", category, file_name
-                            )
-                            files_to_delete.append(category_file_path)
+                # 收集该条目对应的所有物理文件路径
+                entry_files: list[str] = [remove_path]
+                if isinstance(image_index[remove_path], dict):
+                    category = image_index[remove_path].get("category", "")
+                    if category and self.plugin.base_dir:
+                        file_name = Path(remove_path).name
+                        category_file_path = str(
+                            Path(self.plugin.base_dir) / "categories" / category / file_name
+                        )
+                        # 避免重复添加（正常流程中 remove_path 就是 categories 下的路径）
+                        if category_file_path != remove_path:
+                            entry_files.append(category_file_path)
 
+                # 先尝试删除文件；只要至少一个文件被删除（或已不存在），就从索引中移除
+                file_gone = False
+                seen_paths: set[str] = set()
+                for file_path in entry_files:
+                    if file_path in seen_paths:
+                        continue
+                    seen_paths.add(file_path)
+
+                    if Path(file_path).exists():
+                        if hasattr(self.plugin, "_safe_remove_file"):
+                            try:
+                                removed = await self.plugin._safe_remove_file(file_path)
+                                if removed:
+                                    files_actually_deleted.append(file_path)
+                                    file_gone = True
+                                else:
+                                    logger.warning(f"[容量控制] 删除文件失败: {file_path}")
+                            except Exception as e:
+                                logger.warning(f"[容量控制] 删除文件异常 {file_path}: {e}")
+                    else:
+                        # 文件已不存在，视为已清理
+                        file_gone = True
+
+                # 只有文件确实被清理后才从索引中删除，避免产生新的"僵尸文件"
+                if file_gone:
                     del image_index[remove_path]
+                else:
+                    logger.warning(f"[容量控制] 文件删除失败，保留索引条目: {remove_path}")
 
         except Exception as e:
             logger.error(f"同步容量控制失败: {e}")
 
-        return files_to_delete
+        return files_actually_deleted
 
     def _get_force_capture_key(self, event) -> str:
         """获取强制捕获的唯一键。
@@ -478,7 +509,7 @@ class EventHandler:
                     temp_path, _is_gif = result
                 else:
                     temp_path = result
-                if not temp_path or not os.path.exists(str(temp_path)):
+                if not temp_path or not Path(temp_path).exists():
                     logger.warning(f"临时文件不存在: {temp_path}")
                     continue
                 process_tasks.append(
@@ -521,7 +552,7 @@ class EventHandler:
                 if isinstance(result, Exception):
                     continue
                 temp_path, url = result
-                if not temp_path or not os.path.exists(temp_path):
+                if not temp_path or not Path(temp_path).exists():
                     continue
                 extra_meta = {"source": "qq_store", "origin_url": self._normalize_str(url)}
                 if origin_target_str:
@@ -575,7 +606,7 @@ class EventHandler:
                 else:
                     temp_path = result
 
-            if not temp_path or not os.path.exists(str(temp_path)):
+            if not temp_path or not Path(temp_path).exists():
                 await event.send(MessageChain([Plain(text="❌ 收录失败：图片临时文件不存在")]))
             else:
                 success, idx = await plugin_instance._process_image(

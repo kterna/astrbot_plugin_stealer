@@ -161,10 +161,13 @@ class IndexRebuildCommand:
                 if not isinstance(source_data, dict):
                     return False
 
+                restored = False
                 if source_data.get("desc"):
                     target_data["desc"] = source_data["desc"]
+                    restored = True
                 if source_data.get("tags"):
                     target_data["tags"] = source_data["tags"]
+                    restored = True
 
                 for key in (
                     "source_message",
@@ -180,7 +183,8 @@ class IndexRebuildCommand:
                 ):
                     if key in source_data:
                         target_data[key] = source_data[key]
-                return True
+                        restored = True
+                return restored
 
             current_hash_map, current_name_map = _build_lookup_maps(old_index)
             legacy_hash_map, legacy_name_map = _build_lookup_maps(legacy_data_map)
@@ -199,11 +203,24 @@ class IndexRebuildCommand:
             final_index = rebuilt_index
             # --- 智能合并逻辑结束 ---
 
+            # 重建后若超过容量限制，先执行容量控制清理
+            max_reg = getattr(self.plugin, "max_reg_num", 0)
+            if max_reg > 0 and len(final_index) > max_reg:
+                logger.info(
+                    f"[rebuild_index] 重建后数量 {len(final_index)} 超过限制 {max_reg}，"
+                    f"执行容量控制清理"
+                )
+                await self.plugin.event_handler._enforce_capacity(final_index)
+
             # 保存合并后的索引
             await self.plugin._save_index(final_index)
 
-            # 统计信息
+            # 统计信息（容量控制后重新统计，只算最终保留的文件）
             new_count = len(final_index)
+            recovered_count = sum(
+                1 for meta in final_index.values()
+                if isinstance(meta, dict) and _has_meaningful_metadata(meta)
+            )
 
             # 按分类统计
             category_stats = Counter(
@@ -215,10 +232,10 @@ class IndexRebuildCommand:
             # 构建结果消息
             result_msg = "✅ 索引重建完成！\n\n"
             result_msg += "📊 统计信息:\n"
-            result_msg += f"  当前索引数量: {old_count}\n"
+            result_msg += f"  重建前旧数据: {old_count} 条\n"
             if legacy_metadata_count > 0:
                 result_msg += f"  旧版备份数据: {legacy_metadata_count} 条\n"
-            result_msg += f"  现有文件数: {new_count}\n"
+            result_msg += f"  重建后索引/文件: {new_count} 个\n"
             result_msg += f"  已恢复元数据: {recovered_count} 条\n"
 
             if category_stats:
