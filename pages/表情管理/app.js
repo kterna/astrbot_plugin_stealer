@@ -153,6 +153,14 @@ const TEMPLATE = /* html */ `
                     </div>
 
                     <div class="toolbar-actions">
+                        <div class="toolbar-group mobile-category-select">
+                            <select v-model="selectedCategory" @change="fetchImages(1)" class="codex-input">
+                                <option value="">全部分类</option>
+                                <option value="__favorite__">⭐ 收藏</option>
+                                <option v-for="cat in categories" :key="cat.key" :value="cat.key">{{ cat.name }}</option>
+                            </select>
+                        </div>
+
                         <div class="toolbar-group">
                             <select v-model="sortBy" @change="fetchImages(1)" class="codex-input toolbar-sort-select">
                                 <option value="newest">最新</option>

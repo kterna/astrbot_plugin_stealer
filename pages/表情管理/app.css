@@ -2862,6 +2862,20 @@ input, select, textarea {
     }
 }
 
+.mobile-category-select {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-category-select {
+        display: block;
+        flex: 1;
+    }
+    .mobile-category-select select {
+        width: 100%;
+    }
+}
+
 @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
