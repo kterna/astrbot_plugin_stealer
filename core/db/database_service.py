@@ -268,6 +268,14 @@ class DatabaseService:
             result = conn.execute("SELECT COUNT(*) as cnt FROM emoji").fetchone()
             return result["cnt"] if result else 0
 
+    def count_favorites(self) -> int:
+        """统计收藏表情包总数。"""
+        with self._get_connection() as conn:
+            result = conn.execute(
+                "SELECT COUNT(*) as cnt FROM emoji WHERE is_favorite = 1"
+            ).fetchone()
+            return result["cnt"] if result else 0
+
     def increment_usage_sync(self, path: str) -> None:
         """同步增加使用次数。"""
         now = int(time.time())
@@ -757,7 +765,8 @@ class DatabaseService:
 
             data_sql = f"""
                 SELECT e.path, e.hash, e.category, e.desc, e.scope_mode,
-                       e.origin_target, e.created_at, e.use_count
+                       e.origin_target, e.created_at, e.use_count, e.last_used_at,
+                       e.is_favorite
                 FROM emoji e {where_sql}
                 ORDER BY {order_sql}
                 LIMIT ? OFFSET ?

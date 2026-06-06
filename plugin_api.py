@@ -192,6 +192,16 @@ class PluginAPI:
         result.sort(key=lambda x: x["count"], reverse=True)
         return result
 
+    def _count_favorites(self) -> int:
+        db = self._db
+        if db and hasattr(db, "count_favorites"):
+            return int(db.count_favorites())
+        return sum(
+            1
+            for meta in self._get_index().values()
+            if isinstance(meta, dict) and bool(meta.get("is_favorite", 0))
+        )
+
     def _build_image_item(self, path_str: str, meta: dict) -> dict | None:
         try:
             Path(path_str)
@@ -365,6 +375,7 @@ class PluginAPI:
                         "size": page_size,
                         "images": images,
                         "categories": cats,
+                        "favorite_count": self._count_favorites(),
                     }
                 )
 
@@ -410,6 +421,7 @@ class PluginAPI:
                     "size": page_size,
                     "images": paged,
                     "categories": cats,
+                    "favorite_count": self._count_favorites(),
                 }
             )
         except Exception as e:

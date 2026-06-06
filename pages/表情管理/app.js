@@ -1,4 +1,4 @@
-const { createApp, ref, reactive, onMounted, nextTick } = Vue;
+const { createApp, ref, reactive, computed, onMounted, onUnmounted, nextTick } = Vue;
 
 const PLACEHOLDER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
@@ -1036,15 +1036,42 @@ createApp({
             String(scopeMode || 'public').toLowerCase() === 'local' ? '本群限定' : '公共'
         );
 
+        const normalizeCategories = (rawCategories) => {
+            if (Array.isArray(rawCategories)) {
+                return rawCategories
+                    .map((cat) => {
+                        if (cat && typeof cat === 'object') {
+                            const key = String(cat.key || cat.name || '').trim();
+                            return key ? {
+                                key,
+                                name: String(cat.name || key),
+                                count: Number(cat.count || 0),
+                            } : null;
+                        }
+                        const key = String(cat || '').trim();
+                        return key ? { key, name: key, count: 0 } : null;
+                    })
+                    .filter(Boolean);
+            }
+            if (rawCategories && typeof rawCategories === 'object') {
+                return Object.entries(rawCategories).map(([key, count]) => ({
+                    key,
+                    name: key,
+                    count: Number(count || 0),
+                }));
+            }
+            return [];
+        };
+
         const emotionsOpen = ref(false);
         const newEmotion = reactive({ key: '', name: '', desc: '' });
         const addingEmotion = ref(false);
         const deletingEmotionKey = ref('');
 
-        const searchTimeout = ref(null);
+        let searchTimeout = null;
 
         const isDarkTheme = ref(true);
-        const theme = ref('dark');
+        const theme = computed(() => isDarkTheme.value ? 'dark' : 'light');
 
         const bridge = window.AstrBotPluginPage;
 
@@ -1207,14 +1234,20 @@ createApp({
                 const lastPage = Math.max(1, Math.ceil(nextTotal / pageSize.value));
 
                 if (page > lastPage && nextTotal > 0) {
+                    isFetching = false;
                     return await fetchImages(lastPage);
                 }
 
                 currentPage.value = page;
                 images.value = nextImages;
                 total.value = nextTotal;
-                categories.value = data.categories || [];
+                categories.value = normalizeCategories(data.categories);
                 favoriteCount.value = Number(data.favorite_count || 0);
+                // 清理不在当前页的 imageDataUrls 条目，防止内存无限增长
+                const currentHashes = new Set(nextImages.map(img => img.hash));
+                for (const hash of Object.keys(imageDataUrls)) {
+                    if (!currentHashes.has(hash)) delete imageDataUrls[hash];
+                }
                 nextTick(() => observeImages());
                 if (selectedImages.value.size > 0) {
                     const visibleHashes = new Set(nextImages.map((img) => img.hash));
@@ -1223,9 +1256,6 @@ createApp({
                     );
                 }
                 return nextImages;
-            } catch (e) {
-                console.error(e);
-                return [];
             } catch (e) {
                 console.error(e);
                 return [];
@@ -1252,8 +1282,13 @@ createApp({
         };
 
         const debouncedSearch = () => {
-            clearTimeout(searchTimeout.value);
-            searchTimeout.value = setTimeout(() => fetchImages(1), 400);
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => fetchImages(1), 400);
+        };
+
+        const refreshView = async () => {
+            await fetchImages(currentPage.value);
+            await fetchStats();
         };
 
         const prevPage = () => currentPage.value > 1 && fetchImages(currentPage.value - 1);
@@ -1271,25 +1306,23 @@ createApp({
             previewOpen.value = false;
             previewItem.value = null;
             isEditing.value = false;
-        };
-
-        const prevImage = () => {
-            if (!previewItem.value) return;
-            const idx = images.value.findIndex((i) => i.hash === previewItem.value.hash);
-            if (idx > 0) {
-                previewItem.value = images.value[idx - 1];
-                loadOriginalImage(previewItem.value.hash);
+            // 清理原图缓存，释放内存
+            for (const hash of Object.keys(originalDataUrls)) {
+                delete originalDataUrls[hash];
             }
         };
 
-        const nextImage = () => {
+        const navigateImage = (direction) => {
             if (!previewItem.value) return;
             const idx = images.value.findIndex((i) => i.hash === previewItem.value.hash);
-            if (idx < images.value.length - 1) {
-                previewItem.value = images.value[idx + 1];
+            const nextIdx = idx + direction;
+            if (nextIdx >= 0 && nextIdx < images.value.length) {
+                previewItem.value = images.value[nextIdx];
                 loadOriginalImage(previewItem.value.hash);
             }
         };
+        const prevImage = () => navigateImage(-1);
+        const nextImage = () => navigateImage(1);
 
         const handleKeydown = (e) => {
             if (!previewOpen.value) return;
@@ -1320,8 +1353,7 @@ createApp({
             try {
                 const res = await apiFetch('api/images/update', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...editForm, hash: previewItem.value.hash }),
+body: JSON.stringify({ ...editForm, hash: previewItem.value.hash }),
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -1353,17 +1385,15 @@ createApp({
             if (!await showConfirm(msg)) return;
             try {
                 const res = await apiFetch('api/images/delete', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hash: img.hash, blacklist }),
+                    method: 'POST',
+body: JSON.stringify({ hash: img.hash, blacklist }),
                 });
                 if (res.ok) {
                     closePreview();
                     if (images.value.length === 1 && currentPage.value > 1) {
                         currentPage.value--;
                     }
-                    fetchImages(currentPage.value);
-                    fetchStats();
+                    refreshView();
                 } else {
                     showAlert('删除失败');
                 }
@@ -1374,23 +1404,23 @@ createApp({
 
         const toggleBatchMode = () => {
             isBatchMode.value = !isBatchMode.value;
-            selectedImages.value.clear();
+            selectedImages.value = new Set();
         };
 
         const toggleSelection = (img) => {
-            if (selectedImages.value.has(img.hash)) {
-                selectedImages.value.delete(img.hash);
+            const next = new Set(selectedImages.value);
+            if (next.has(img.hash)) {
+                next.delete(img.hash);
             } else {
-                selectedImages.value.add(img.hash);
+                next.add(img.hash);
             }
+            selectedImages.value = next;
         };
 
         const selectAll = () => {
-            if (selectedImages.value.size === images.value.length) {
-                selectedImages.value.clear();
-            } else {
-                images.value.forEach((img) => selectedImages.value.add(img.hash));
-            }
+            selectedImages.value = selectedImages.value.size === images.value.length
+                ? new Set()
+                : new Set(images.value.map(i => i.hash));
         };
 
         const handleBatchDelete = async () => {
@@ -1400,14 +1430,12 @@ createApp({
             try {
                 const res = await apiFetch('api/images/batch-delete', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hashes: Array.from(selectedImages.value) }),
+body: JSON.stringify({ hashes: Array.from(selectedImages.value) }),
                 });
                 const data = await res.json();
                 if (data.success) {
-                    selectedImages.value.clear();
-                    fetchImages(currentPage.value);
-                    fetchStats();
+                    selectedImages.value = new Set();
+                    refreshView();
                 } else {
                     showAlert(data.error || '删除失败');
                 }
@@ -1441,8 +1469,7 @@ createApp({
             try {
                 const res = await apiFetch('api/images/batch-move', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+body: JSON.stringify({
                         hashes: Array.from(selectedImages.value),
                         category: batchTargetCategory.value,
                     }),
@@ -1450,10 +1477,9 @@ createApp({
                 const data = await res.json();
                 if (data.success) {
                     batchMoveOpen.value = false;
-                    selectedImages.value.clear();
+                    selectedImages.value = new Set();
                     isBatchMode.value = false;
-                    fetchImages(currentPage.value);
-                    fetchStats();
+                    refreshView();
                 } else {
                     showAlert(data.error || '转移失败');
                 }
@@ -1467,8 +1493,7 @@ createApp({
             try {
                 const res = await apiFetch('api/images/batch-scope', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+body: JSON.stringify({
                         hashes: Array.from(selectedImages.value),
                         scope_mode: batchScopeMode.value,
                     }),
@@ -1476,7 +1501,7 @@ createApp({
                 const data = await res.json();
                 if (data.success) {
                     batchScopeOpen.value = false;
-                    selectedImages.value.clear();
+                    selectedImages.value = new Set();
                     isBatchMode.value = false;
                     await fetchImages(currentPage.value);
                     if (Number(data.skipped || 0) > 0) {
@@ -1495,8 +1520,7 @@ createApp({
             try {
                 const res = await apiFetch('api/images/update', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hash: img.hash, scope_mode: scopeMode }),
+body: JSON.stringify({ hash: img.hash, scope_mode: scopeMode }),
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -1522,8 +1546,7 @@ createApp({
             try {
                 const res = await apiFetch('api/images/update', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hash: img.hash, is_favorite: newValue }),
+body: JSON.stringify({ hash: img.hash, is_favorite: newValue }),
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -1541,12 +1564,11 @@ createApp({
             try {
                 const res = await apiFetch('api/images/batch-favorite', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ hashes: Array.from(selectedImages.value), favorite }),
+body: JSON.stringify({ hashes: Array.from(selectedImages.value), favorite }),
                 });
                 const data = await res.json();
                 if (data.success) {
-                    selectedImages.value.clear();
+                    selectedImages.value = new Set();
                     isBatchMode.value = false;
                     await fetchImages(currentPage.value);
                     showAlert(`已${favorite ? '收藏' : '取消收藏'} ${data.count || 0} 张图片`);
@@ -1570,6 +1592,7 @@ createApp({
         };
 
         const closeUploadModal = () => {
+            if (uploadPreviewUrl.value) URL.revokeObjectURL(uploadPreviewUrl.value);
             uploadOpen.value = false;
             analysisScenes.value = [];
         };
@@ -1598,12 +1621,14 @@ createApp({
 
         const clearBatchFiles = () => {
             batchFiles.value = [];
+            batchPreviews.value.forEach(url => URL.revokeObjectURL(url));
             batchPreviews.value = [];
         };
 
         const handleBatchFileSelect = (e) => {
             const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
             if (files.length === 0) return;
+            batchPreviews.value.forEach(url => URL.revokeObjectURL(url));
             batchFiles.value = files;
             batchPreviews.value = files.map(f => URL.createObjectURL(f));
         };
@@ -1692,6 +1717,7 @@ createApp({
         const handleFileSelect = (e) => {
             const file = e.target.files[0];
             if (file && file.type.startsWith('image/')) {
+                if (uploadPreviewUrl.value) URL.revokeObjectURL(uploadPreviewUrl.value);
                 uploadFile.value = file;
                 uploadPreviewUrl.value = URL.createObjectURL(file);
                 uploadError.value = null;
@@ -1728,7 +1754,6 @@ createApp({
 
         const useImageAnalyzer = () => {
             const isAnalyzing = ref(false);
-            const lastAnalysisResult = ref(null);
 
             const analyze = async (file) => {
                 if (!file) {
@@ -1751,7 +1776,6 @@ createApp({
                         throw new Error(data.error || '分析失败');
                     }
 
-                    lastAnalysisResult.value = data;
                     console.log('[Analyzer] 分析成功:', data);
                     return data;
                 } catch (e) {
@@ -1803,7 +1827,6 @@ createApp({
 
             return {
                 isAnalyzing,
-                lastAnalysisResult,
                 analyze,
                 applyToForm,
             };
@@ -1861,8 +1884,7 @@ createApp({
 
                 const res = await apiFetch('api/categories', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ categories: currentList }),
+body: JSON.stringify({ categories: currentList }),
                 });
                 const data = await res.json();
 
@@ -1889,9 +1911,8 @@ createApp({
             deletingEmotionKey.value = cat.key;
             try {
                 const res = await apiFetch('api/categories/delete', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: cat.key }),
+                    method: 'POST',
+body: JSON.stringify({ key: cat.key }),
                 });
                 const data = await res.json().catch(() => ({}));
                 if (res.ok && data.success) {
@@ -1900,8 +1921,7 @@ createApp({
                     if (previewItem.value && previewItem.value.category === cat.key)
                         previewItem.value.category = 'unknown';
                     fetchEmotions();
-                    fetchImages(currentPage.value);
-                    fetchStats();
+                    refreshView();
                 } else {
                     showAlert(data.error || '删除失败');
                 }
@@ -1926,7 +1946,6 @@ createApp({
 
         const initTheme = () => {
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            theme.value = prefersDark ? 'dark' : 'light';
             isDarkTheme.value = prefersDark;
             applyTheme();
         };
@@ -1936,28 +1955,20 @@ createApp({
         };
 
         const toggleTheme = () => {
-            const flash = document.createElement('div');
-            flash.className = 'theme-flash active';
-            document.body.appendChild(flash);
-
             isDarkTheme.value = !isDarkTheme.value;
-            theme.value = isDarkTheme.value ? 'dark' : 'light';
             applyTheme();
-
-            setTimeout(() => {
-                flash.remove();
-            }, 600);
         };
 
         let resizeTimer = null;
+        const handleResize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => { updatePageSize(); fetchImages(1); }, 300);
+        };
         onMounted(() => {
             initTheme();
             updatePageSize();
             window.addEventListener('keydown', handleKeydown);
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => { updatePageSize(); fetchImages(1); }, 300);
-            });
+            window.addEventListener('resize', handleResize);
             imgObserver = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
@@ -1970,6 +1981,14 @@ createApp({
             }, { rootMargin: '200px' });
             checkHealth();
             loadAll();
+        });
+
+        onUnmounted(() => {
+            window.removeEventListener('keydown', handleKeydown);
+            window.removeEventListener('resize', handleResize);
+            if (imgObserver) imgObserver.disconnect();
+            clearTimeout(resizeTimer);
+            clearTimeout(searchTimeout);
         });
 
         return {
@@ -2032,6 +2051,7 @@ createApp({
             analyzeImage,
 
             batchUploadOpen,
+            batchUploading,
             batchFiles,
             batchPreviews,
             batchUploadError,
@@ -2069,6 +2089,7 @@ createApp({
             toggleScope,
             prevPage,
             nextPage,
+            refreshView,
             formatDate,
             formatOriginTarget,
             getScopeLabel,

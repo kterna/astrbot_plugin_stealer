@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.7] - 2026-06-07
+
+### added
+- 新增表情包收藏功能：WebUI 支持单张/批量收藏，侧边栏支持只看收藏
+- 收藏状态接入自动发送策略：随机模式提高收藏项权重，智能模式为收藏项加分
+- 收藏表情包加入容量清理保护，不参与自动淘汰
+
+### fix
+- 完成收藏功能上线前接口修复：`/images` 返回 `favorite_count`，数据库分页返回 `is_favorite` / `last_used_at`
+- 修正 WebUI 删除图片/分类的请求方法与后端路由一致
+- 修复分页越界重试被请求锁拦截的问题
+
+### improved
+- WebUI 分类数据兼容数组和对象两种返回格式
+- 优化 WebUI 样式性能并清理少量冗余 CSS
+
 ## [2.6.6] - 2026-06-04
 
 ### fix
