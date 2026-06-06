@@ -242,9 +242,9 @@ const TEMPLATE = /* html */ `
                           </svg>
                         </button>
 
-                        <div class="item-image">
-                            <div v-show="!imageDataUrls[img.hash]" class="image-placeholder" :style="{ backgroundColor: hashToColor(img.hash) }"></div>
-                            <img v-show="imageDataUrls[img.hash]" :src="imageDataUrls[img.hash]" loading="lazy" :alt="img.desc" :data-hash="img.hash" class="fade-in">
+                        <div class="item-image" :data-hash="img.hash">
+                            <div v-if="!imageDataUrls[img.hash]" class="image-placeholder" :style="{ backgroundColor: hashToColor(img.hash) }"></div>
+                            <img v-else :src="imageDataUrls[img.hash]" loading="lazy" :alt="img.desc" class="fade-in">
                         </div>
 
                         <div class="item-info">
@@ -992,10 +992,10 @@ createApp({
 
         const observeImages = () => {
             if (!imgObserver) return;
-            document.querySelectorAll('.item-image img[data-hash]').forEach((img) => {
-                if (!img.dataset.observed) {
-                    img.dataset.observed = 'true';
-                    imgObserver.observe(img);
+            document.querySelectorAll('.item-image[data-hash]').forEach((el) => {
+                if (!el.dataset.observed) {
+                    el.dataset.observed = 'true';
+                    imgObserver.observe(el);
                 }
             });
         };
