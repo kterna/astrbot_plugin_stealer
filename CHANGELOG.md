@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.10] - 2026-06-12
+
+### improved
+- 优化 `steal_sticker` 主动偷取工具描述，明确 `image_ref` 必填、来源限制与 VLM 自动打标行为，降低 LLM 误调用/偷错图概率
+- 移除 `_inject_emotion_instruction` 中注入式偷取指引，避免每次 LLM 请求都追加额外提示词，提升提示词缓存命中率
+- 移除 `steal_by_llm` 独立配置与相关 i18n 残留，LLM 主动偷取统一由 `steal_emoji` 总开关控制
+
 ## [2.6.9] - 2026-06-09
 
 ### added

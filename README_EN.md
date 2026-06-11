@@ -224,6 +224,7 @@ All commands use the `/meme` prefix.
 |:---|:---|
 | `search_emoji` | LLM searches for matching emoji candidates with category, scene, scope, and usage hints |
 | `send_emoji_by_id` | LLM selects and sends an emoji from the candidate list; failures include explicit reason codes |
+| `steal_sticker` | LLM imports an image when the user asks to collect it or the current message contains a suitable emoji; `image_ref` may be omitted to use the first image in the current message, and VLM handles category, tags, description, and scene analysis |
 
 ## ⚠️ Notes
 
