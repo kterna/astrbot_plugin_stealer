@@ -228,56 +228,6 @@
     ],
     "hint": "conservative=只清理失效索引和临时文件，balanced=额外清理孤儿文件和缩略图缓存，aggressive=额外清理 raw 目录"
   },
-  "_webui_section": {
-    "description": "=== WebUI 管理界面 ===",
-    "type": "text",
-    "invisible": true
-  },
-  "webui": {
-    "description": "WebUI 管理界面配置（已适配 AstrBot Pages 系统）",
-    "type": "object",
-    "invisible": true,
-    "items": {
-      "enabled": {
-        "description": "启用 WebUI [已弃用]",
-        "type": "bool",
-        "default": false,
-        "hint": "⚠️ 此选项已弃用。插件 WebUI 已迁移至 AstrBot Pages 系统，在插件详情的「组件」中查看。无需独立端口。",
-        "invisible": true
-      },
-      "host": {
-        "description": "监听地址 [已弃用]",
-        "type": "string",
-        "default": "0.0.0.0",
-        "invisible": true
-      },
-      "port": {
-        "description": "监听端口 [已弃用]",
-        "type": "int",
-        "default": 9191,
-        "invisible": true
-      },
-      "auth_enabled": {
-        "description": "启用登录验证 [已弃用]",
-        "type": "bool",
-        "default": true,
-        "hint": "认证由 AstrBot 面板统一管理，无需插件独立配置。",
-        "invisible": true
-      },
-      "password": {
-        "description": "访问密码 [已弃用]",
-        "type": "string",
-        "default": "",
-        "invisible": true
-      },
-      "session_timeout": {
-        "description": "会话超时时间/秒 [已弃用]",
-        "type": "int",
-        "default": 3600,
-        "invisible": true
-      }
-    }
-  },
   "_advanced_section": {
     "description": "=== 高级配置（特殊情况使用） ===",
     "type": "text",

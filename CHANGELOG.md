@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.12] - 2026-06-18
+
+### fixed
+- 修复 v4.26.0-beta.4 中 `@filter.llm_tool` 工具接收 `ContextWrapper` 导致 `send_emoji_by_id` / `search_emoji` / `steal_sticker` 调用失败 (#76)
+  - 新增 `_unwrap_event` 工具函数，检测 `ContextWrapper` 自动解包为 `AstrMessageEvent`
+  - 三个工具入口处统一解包，消除 `AttributeError: 'ContextWrapper' object has no attribute 'send'` / `'set_extra'` 等错误
+
+### removed
+- 移除 WebUI 独立密码/认证残留代码（`WebuiConfig` 类、`auth_enabled`、`password`、`session_timeout` 等字段）
+  - 插件已迁移至 AstrBot Pages 系统，认证由面板统一管理，这些配置项不再生效
+
 ## [2.6.11] - 2026-06-15
 
 ### fix

@@ -29,6 +29,7 @@ from .core.processing.natural_emotion_analyzer import SmartEmotionMatcher
 from .core.processing.image_processor_service import ImageProcessorService
 from .task_scheduler import TaskScheduler
 from .plugin_api import PluginAPI
+from .core.search.emoji_smart_select_service import _unwrap_event
 
 try:
     import aiofiles  # type: ignore
@@ -346,20 +347,9 @@ class Main(Star):
         event_handler.consume_force_capture(event)
 
     def _apply_plugin_config_updates(self, config_dict: dict) -> None:
-        """将更新字典写回 PluginConfig（包含 webui 嵌套字段兼容）。"""
+        """将更新字典写回 PluginConfig。"""
         for k, v in config_dict.items():
-            if k == "webui" and isinstance(v, dict):
-                current_webui = self.plugin_config.webui
-                for wk, wv in v.items():
-                    setattr(current_webui, wk, wv)
-                self.plugin_config.save_webui_config()
-            elif k.startswith("webui_"):
-                wk = k[6:]
-                if hasattr(self.plugin_config.webui, wk):
-                    setattr(self.plugin_config.webui, wk, v)
-                    self.plugin_config.save_webui_config()
-            else:
-                setattr(self.plugin_config, k, v)
+            setattr(self.plugin_config, k, v)
 
     def _sync_image_processor_from_runtime(self) -> None:
         final_prompts = self.plugin_config.get_prompts(
@@ -638,6 +628,7 @@ class Main(Star):
 
         请先锁定"当前心情词"，再仔细阅读候选描述，选择最能代表你当前心情与语气的一张。
         """
+        event = _unwrap_event(event)
         query = str(query or "").strip()
         logger.info(f"[Tool] LLM 搜索表情包: {query}")
 
@@ -751,6 +742,7 @@ class Main(Star):
             emoji_id(number): 表情包编号（从 search_emoji 返回的列表中选择）
 
         """
+        event = _unwrap_event(event)
         logger.info(f"[Tool] LLM 选择发送表情包编号: {emoji_id}")
         turn_state = self._emoji_turn_state(event)
 
@@ -834,6 +826,7 @@ class Main(Star):
         Args:
             image_ref(string): 图片 URL 或文件路径，从当前消息已有的 Image URL 中选择。
         """
+        event = _unwrap_event(event)
         try:
             if not self.steal_emoji:
                 yield "偷取失败：表情包偷取功能未开启，请先在插件配置中启用"

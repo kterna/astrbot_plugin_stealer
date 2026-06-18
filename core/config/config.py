@@ -2,20 +2,11 @@ import json
 from pathlib import Path
 from typing import Any, ClassVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api.star import Context, StarTools
-
-
-class WebuiConfig(BaseModel):
-    enabled: bool = False
-    host: str = "0.0.0.0"
-    port: int = 9191
-    auth_enabled: bool = True
-    password: str = ""
-    session_timeout: int = 3600
 
 
 class PluginConfig(BaseModel):
@@ -43,9 +34,6 @@ class PluginConfig(BaseModel):
     # === 模型配置 ===
     vision_provider_id: str = ""
     napcat_token: str = ""  # NapCat 访问令牌
-
-    # === WebUI 管理界面 ===
-    webui: WebuiConfig = Field(default_factory=WebuiConfig)
 
     # === 内部常量/高级配置 ===
     max_reg_num: int = 100
@@ -311,11 +299,6 @@ class PluginConfig(BaseModel):
             removed = True
         if removed and hasattr(self._data, "save_config"):
             self._data.save_config()
-
-    def save_webui_config(self) -> None:
-        """保存 WebUI 配置。"""
-        if hasattr(self, "_data") and hasattr(self._data, "save_config"):
-            self._data.save_config({"webui": self.webui.model_dump()})
 
     def __setattr__(self, key: str, value: Any):
         super().__setattr__(key, value)

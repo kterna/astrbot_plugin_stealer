@@ -6,8 +6,21 @@ from typing import Any
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent
+from astrbot.core.agent.run_context import ContextWrapper
 
 from .text_similarity import calculate_hybrid_similarity, calculate_simple_similarity, tokenize_for_bm25, _extract_words
+
+
+def _unwrap_event(event: AstrMessageEvent) -> AstrMessageEvent:
+    """从 ContextWrapper 中提取 AstrMessageEvent（兼容 v4.26+ 工具调用上下文）。
+
+    v4.26+ 中 @filter.llm_tool 处理函数接收 ContextWrapper 而非直接 AstrMessageEvent，
+    通过 ContextWrapper.context.event 获取内部的 AstrMessageEvent。
+    参考: astrbot.core.astr_agent_context.AstrAgentContext
+    """
+    if isinstance(event, ContextWrapper):
+        return event.context.event
+    return event
 
 
 class EmojiSmartSelectService:
@@ -513,6 +526,7 @@ class EmojiSmartSelectService:
 
     async def send_emoji_message(self, event: AstrMessageEvent, emoji_path: str) -> str | None:
         """Send a single emoji using the fastest compatible path."""
+        event = _unwrap_event(event)
         if await self._try_send_telegram_sticker(event, emoji_path):
             return "telegram_sticker"
 
@@ -533,6 +547,7 @@ class EmojiSmartSelectService:
         self, event: AstrMessageEvent, emoji_path: str, cleaned_text: str
     ) -> bool:
         """Send one emoji message in the fastest compatible format."""
+        event = _unwrap_event(event)
         try:
             # active_sent means an emoji was actually sent, not merely auto-claimed.
             if self.plugin._emoji_turn_state(event).is_active_sent():
@@ -561,6 +576,7 @@ class EmojiSmartSelectService:
         self, event: AstrMessageEvent, emoji_paths: list[str], cleaned_text: str
     ) -> None:
         """Append explicitly selected emojis to the current result."""
+        event = _unwrap_event(event)
         from astrbot.api.message_components import Plain
 
         try:
@@ -599,6 +615,7 @@ class EmojiSmartSelectService:
         注意：概率判定由 Main 在调用前通过 _resolve_auto_emoji_turn_permission 完成，
         本方法只负责选图和发图。
         """
+        event = _unwrap_event(event)
         if not self._check_group_allowed(event):
             return False
 
