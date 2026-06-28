@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.1] - 2026-06-28
+
+### added
+- WebUI 搜索扩展覆盖 hash/分类/来源/群号/文件名/路径，搜索框支持按群号或文件名快速定位表情包 (#76)
+- 批量导入支持选择文件夹并递归检索子文件夹内所有图片 (#75)
+
+## [2.7.0] - 2026-06-28
+
+### added
+- 待审核池完整闭环 (#78)：自动偷取先进 pending，人工审核通过后入库
+  - `/pending` 分页列表、`/pending/approve` 批量通过、`/pending/reject` 批量拒绝+拉黑、`/pending/stats` 容量统计
+  - 哈希去重：插入前三重检查（正式库/pending/黑名单），避免重复图片进入审核区
+  - 原子写入 + 审核回滚：文件移动失败不写 DB，DB 写入失败文件移回 pending
+  - 容量护栏：`steal_pool_capacity` 满则暂停偷取，审核通过后自动恢复
+  - WebUI 双区管理：📋 审核区（审核卡片、批量操作、容量进度条）/ 🗄️ 表情包库
+  - 缩略图 pending 回退：正式库未命中时自动回退查待审核池
+- 嵌入向量检索：FaissVecDB 语义搜索优先，不可用自动降级 BM25
+  - 启动时自动回填旧数据向量，provider 维度不匹配自动修复
+  - auto-emoji 选图加入嵌入语义增强评分 (bonus × 0.20)
+  - LLM 工具 `search_meme` / `send_meme` 搜索路径嵌入优先
+  - `faiss-cpu>=1.8.0` 列为正式依赖
+- 启动孤儿扫描：清理无文件索引/无索引文件（categories + pending 双目录）
+- WebUI 排序新增"最常发送"/"最近发送"选项
+
+### changed
+- 统一命名 emoji/sticker → meme：LLM 工具 3 个（`search_meme`/`send_meme`/`steal_meme`）、配置键 12 个、i18n 三语言同步
+- `_sync_index` 不再在审核通过后调用，改为仅 invalidate BM25 索引（修复了新入库 emoji 被 sync diff 误删的 bug）
+- WebUI 审核卡片加大、描述两行显示
+
+### deprecated
+- 旧配置键（`steal_emoji`/`auto_send`/`emoji_chance` 等）已全部重命名，升级后需在配置面板重新设置
+
 ## [2.6.14] - 2026-06-24
 
 ### fixed
