@@ -133,5 +133,240 @@
             "description": "Embedding model ID",
             "hint": "Leave blank to auto-use AstrBot first Embedding Provider. Check Admin LLM Config for available IDs"
         }
+    },
+    "pages": {
+        "dashboard": {
+            "title": "Sticker Dashboard",
+            "header": {
+                "brand": "Henry's Spoils",
+                "subtitle": "Sticker Manager"
+            },
+            "health": {
+                "ok": "Healthy",
+                "slow": "Slow",
+                "error": "Error",
+                "checking": "Checking"
+            },
+            "stats": {
+                "total": "Total",
+                "categories": "Categories",
+                "today": "Today"
+            },
+            "sections": {
+                "pending": "Pending",
+                "library": "Library"
+            },
+            "categories": {
+                "title": "Categories",
+                "favorites": "Favorites",
+                "all": "All",
+                "add_new": "Add Category"
+            },
+            "pending": {
+                "pool": "Pending Pool",
+                "capacity": "Capacity",
+                "paused": "Paused",
+                "category_filter": "Category Filter",
+                "progress": "Pending",
+                "paused_hint": "Stealing is paused and will resume after review."
+            },
+            "search": {
+                "library": "Search stickers...",
+                "pending": "Search pending stickers..."
+            },
+            "sort": {
+                "newest": "Newest",
+                "oldest": "Oldest",
+                "most_used": "Most Used",
+                "last_used": "Last Used"
+            },
+            "actions": {
+                "done": "Done",
+                "batch": "Batch",
+                "categories": "Categories",
+                "add": "Add",
+                "batch_import": "Batch Import",
+                "storage_cleanup": "Storage Cleanup",
+                "unfavorite": "Remove Favorite",
+                "favorite": "Favorite",
+                "approve_all": "Approve All",
+                "delete_all": "Delete All",
+                "delete_blacklist": "Delete + Blacklist",
+                "approve": "Approve",
+                "delete": "Delete",
+                "blacklist": "Blacklist",
+                "download": "Download",
+                "edit": "Edit",
+                "unset_local": "Unset Local",
+                "set_local": "Set Local",
+                "cancel": "Cancel",
+                "save": "Save",
+                "analyzing": "Analyzing...",
+                "auto_analyze": "Auto Analyze",
+                "uploading": "Uploading...",
+                "confirm_add": "Confirm Add",
+                "clear_selection": "Clear Selection",
+                "retry": "Retry",
+                "close": "Close",
+                "confirm_move": "Confirm Move",
+                "confirm_set": "Confirm Set",
+                "select_all": "Select All",
+                "move": "Move",
+                "repair_origin": "Repair Origin",
+                "confirm": "Confirm"
+            },
+            "empty": {
+                "library_title": "No stickers yet",
+                "library_hint": "Click \"Add\" to upload a new sticker.",
+                "pending_title": "No pending stickers",
+                "pending_hint": "Newly stolen stickers will wait here for review.",
+                "no_categories": "No categories yet"
+            },
+            "pagination": {
+                "prev": "Previous",
+                "next": "Next"
+            },
+            "scope": {
+                "public": "Public",
+                "local": "Local only",
+                "local_short": "Local"
+            },
+            "modal": {
+                "edit": "Edit",
+                "details": "Details",
+                "add_sticker": "Add Sticker",
+                "batch_import": "Batch Import Stickers",
+                "category_manager": "Category Manager",
+                "batch_move": "Batch Move",
+                "batch_scope": "Batch Scope",
+                "confirm": "Confirm Action",
+                "input": "Input"
+            },
+            "fields": {
+                "category": "Category",
+                "scope": "Scope",
+                "use_count": "Use Count",
+                "last_used": "Last Used",
+                "favorite": "Favorite",
+                "origin": "Origin",
+                "description": "Description",
+                "tags": "Tags",
+                "scenes": "Scenes",
+                "created_at": "Added At",
+                "target_category": "Target Category",
+                "target_scope": "Target Scope"
+            },
+            "units": {
+                "times": "times"
+            },
+            "messages": {
+                "origin_unset": "Not recorded",
+                "origin_group": "Group",
+                "origin_user": "User",
+                "unknown_error": "Unknown error",
+                "unknown": "Unknown",
+                "no_description": "No description",
+                "never_used": "Never used",
+                "favorited": "Favorited",
+                "not_favorited": "Not favorited",
+                "no_tags": "No tags",
+                "no_scenes": "No scenes",
+                "scene_separator_hint": "comma separated",
+                "tag_separator_hint": "comma separated",
+                "scene_input_hint": "You can separate scenes with commas or semicolons."
+            },
+            "placeholders": {
+                "edit_scene": "Example: celebration, happy",
+                "edit_tags": "Example: cute, funny, rare",
+                "select_category": "Select a category...",
+                "upload_scene": "Example: office, chat window, late night",
+                "upload_tags": "Example: cute, funny",
+                "upload_desc": "Describe this sticker...",
+                "category_key": "Key (e.g. happy)",
+                "category_name": "Name (e.g. Happy)",
+                "category_desc": "Description (optional)",
+                "select": "Select..."
+            },
+            "upload": {
+                "click_to_upload": "Click to upload an image"
+            },
+            "analysis": {
+                "scenes_title": "Detected scenes",
+                "scenes_hint": "Click a tag to add or remove it from the scene field."
+            },
+            "batch": {
+                "include_subfolders": "Include subfolders",
+                "selected_count": "Selected {count} image(s)",
+                "more_count": "{count} more...",
+                "drag_upload": "Click or drag to upload multiple images",
+                "supported_formats": "Supports PNG, JPG, GIF, WEBP, BMP",
+                "default_category": "Default Category",
+                "default_category_hint": "Images will be saved into this category unless auto analyze is enabled.",
+                "auto_analyze": "Auto analyze each image and classify automatically",
+                "auto_analyze_disabled_hint": "Clear the selected category before enabling auto analyze.",
+                "auto_analyze_warning": "Auto analyze will call the VLM service concurrently. Make sure your API supports concurrency or upload in smaller batches.",
+                "start_import": "Start Import ({count})",
+                "processing": "Processing...",
+                "completed": "Import complete",
+                "failed": "Import failed",
+                "success": "success",
+                "failed_count": "failed",
+                "continue_import": "Continue Import",
+                "selected_images": "Selected {count} image(s)",
+                "scope_hint": "Images missing origin group info will be skipped when setting local scope.",
+                "selected_short": "Selected {count}"
+            },
+            "alerts": {
+                "pending_approved": "Approved {count} item(s).",
+                "approve_failed": "Approve failed",
+                "and_blacklisted": "(blacklisted)",
+                "pending_deleted": "Deleted {count} item(s).",
+                "delete_failed": "Delete failed",
+                "select_pending_first": "Select pending items first.",
+                "failed_count": "{count} failed.",
+                "batch_approve_failed": "Batch approve failed",
+                "blacklisted_count": "Blacklisted {count} item(s).",
+                "batch_delete_failed": "Batch delete failed",
+                "save_failed": "Save failed",
+                "action_failed": "Action failed",
+                "move_failed": "Move failed",
+                "batch_scope_partial": "Updated {count} image(s). {skipped} skipped because origin group info is missing.",
+                "scope_set_failed": "Scope update failed.",
+                "scope_origin_missing": "This image is missing origin group info and cannot be set to local.",
+                "scope_update_failed": "Scope update failed.",
+                "favorite_failed": "Favorite update failed",
+                "batch_favorite_added": "Favorited {count} image(s).",
+                "batch_favorite_removed": "Removed favorites from {count} image(s).",
+                "batch_action_failed": "Batch action failed",
+                "storage_scan_failed": "Storage scan failed.",
+                "storage_nothing_to_clean": "No storage items need cleanup.",
+                "storage_cleanup_failed": "Storage cleanup failed.",
+                "storage_cleanup_done": "Storage cleanup completed. Processed {count} item(s).",
+                "scope_repaired": "Repaired origin scope for {count} image(s).",
+                "scope_repair_failed": "Origin scope repair failed.",
+                "select_category_or_auto": "Select a category or enable auto analyze.",
+                "upload_failed": "Upload failed.",
+                "upload_error": "Upload error.",
+                "batch_import_failed": "Batch import failed.",
+                "select_image_first": "Select an image first.",
+                "analyze_failed": "Analyze failed.",
+                "no_valid_info": "No valid information recognized.",
+                "add_failed": "Add failed."
+            },
+            "confirm": {
+                "pending_approve_batch": "Approve {count} pending item(s)?",
+                "pending_delete_blacklist_batch": "Delete and blacklist {count} pending item(s)?",
+                "pending_delete_batch": "Delete {count} pending item(s)?",
+                "delete_and_blacklist_image": "Delete and blacklist this image?\\nIt will no longer be auto-collected.",
+                "delete_image": "Delete this image? This action cannot be undone.",
+                "delete_selected_images": "Delete {count} selected image(s)?",
+                "storage_cleanup": "Found {count} cleanable item(s). This will remove stale indexes, orphan files, thumbnail cache, and temp files. Continue?",
+                "update_existing_category": "Category {key} already exists. Update it?",
+                "delete_category": "Delete category {key}? Images in this category will be deleted permanently."
+            },
+            "prompt": {
+                "origin_scope": "Enter the origin scope, for example group:123456 or user:123456."
+            }
+        }
     }
 }

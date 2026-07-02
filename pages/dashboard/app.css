@@ -73,12 +73,12 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Light theme body adjustments */
+
 [data-theme="light"] body {
     background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
 }
 
-/* ========== Typography ========== */
+
 h1, h2, h3 {
     font-family: 'Cinzel', serif;
     font-weight: 700;
@@ -108,7 +108,7 @@ h2 {
     margin: 0 0 16px 0;
 }
 
-/* ========== Main Layout ========== */
+
 [v-cloak] {
     display: none !important;
 }
@@ -119,7 +119,7 @@ h2 {
     flex-direction: column;
 }
 
-/* ========== Header ========== */
+
 .codex-header {
     position: fixed;
     top: 0;
@@ -196,7 +196,7 @@ h2 {
     text-transform: uppercase;
 }
 
-/* ========== Stats Bar ========== */
+
 
 .stat-item {
     display: flex;
@@ -225,7 +225,7 @@ h2 {
     margin-top: 2px;
 }
 
-/* ========== Main Container ========== */
+
 .main-container {
     flex: 1;
     display: flex;
@@ -238,7 +238,7 @@ h2 {
     padding-left: calc(var(--sidebar-width) + 20px);
 }
 
-/* ========== Sidebar ========== */
+
 .sidebar {
     position: fixed;
     top: var(--header-height);
@@ -325,7 +325,7 @@ h2 {
     border-color: var(--gold-dim);
 }
 
-/* ========== Inventory Panel ========== */
+
 .inventory-panel {
     flex: 1;
     display: flex;
@@ -376,7 +376,7 @@ h2 {
     border-top: none;
 }
 
-/* ========== Toolbar ========== */
+
 .inventory-toolbar {
     display: flex;
     justify-content: space-between;
@@ -418,7 +418,7 @@ h2 {
     align-items: center;
 }
 
-/* 工具栏按钮分组 */
+
 .toolbar-group {
     display: flex;
     gap: 8px;
@@ -443,7 +443,7 @@ h2 {
     }
 }
 
-/* ========== Inventory Grid ========== */
+
 .inventory-grid {
     flex: 1;
     padding: 24px;
@@ -454,7 +454,7 @@ h2 {
     align-content: start;
 }
 
-/* Item Slot */
+
 .item-slot {
     background: var(--bg-card);
     border-radius: 12px;
@@ -480,7 +480,7 @@ h2 {
     box-shadow: 0 0 0 2px var(--gold-glow), 0 4px 16px rgba(212, 168, 83, 0.2);
 }
 
-/* Batch Indicator */
+
 .batch-indicator {
     position: absolute;
     top: 6px;
@@ -498,7 +498,7 @@ h2 {
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-/* Item Image */
+
 .item-image {
     flex: 1;
     display: flex;
@@ -523,7 +523,7 @@ h2 {
     transform: scale(1.02);
 }
 
-/* Item Info */
+
 .item-info {
     background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.6) 100%);
     padding: 10px;
@@ -554,7 +554,7 @@ h2 {
     font-weight: 600;
 }
 
-/* Light theme scope-pill with proper contrast */
+
 [data-theme="light"] .scope-pill {
     border-color: rgba(184, 148, 46, 0.5);
     color: #8b6914;
@@ -619,7 +619,7 @@ h2 {
     color: var(--text-secondary);
 }
 
-/* ========== Pagination ========== */
+
 .pagination-bar {
     display: flex;
     justify-content: center;
@@ -639,7 +639,7 @@ h2 {
     text-align: center;
 }
 
-/* ========== Buttons ========== */
+
 .codex-btn {
     background: linear-gradient(180deg, #1d2633 0%, #0d121c 100%);
     border: 1px solid var(--gold-dim);
@@ -734,7 +734,7 @@ h2 {
     padding: 0;
 }
 
-/* ========== Modals ========== */
+
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -793,7 +793,7 @@ h2 {
     border-bottom: none;
 }
 
-/* Corner decorations for modal panels (as real elements, not pseudo) */
+
 .modal-panel-corner-bl,
 .modal-panel-corner-br {
     position: absolute;
@@ -861,7 +861,7 @@ h2 {
     display: flex;
 }
 
-/* Item Detail */
+
 .item-detail {
     display: flex;
     width: 100%;
@@ -1041,7 +1041,7 @@ h2 {
     min-width: 80px;
 }
 
-/* ========== Form Elements ========== */
+
 .codex-input {
     background: rgba(13, 20, 31, 0.6);
     border: 1px solid var(--glass-border);
@@ -1075,7 +1075,7 @@ select.codex-input {
     padding-right: 36px;
 }
 
-/* ========== Upload ========== */
+
 .upload-area {
     border: 2px dashed var(--glass-border);
     padding: 40px;
@@ -1147,7 +1147,7 @@ select.codex-input {
     }
 }
 
-/* ========== Batch Bar ========== */
+
 .batch-bar {
     position: fixed;
     bottom: 24px;
@@ -1165,7 +1165,7 @@ select.codex-input {
     justify-content: center;
 }
 
-/* ========== Loading & Empty ========== */
+
 .loading-state {
     display: flex;
     flex-direction: column;
@@ -1189,7 +1189,7 @@ select.codex-input {
     text-align: center;
 }
 
-/* ========== Tablet Responsive ========== */
+
 @media (max-width: 1200px) {
     :root {
         --slot-size: var(--slot-size-tablet);
@@ -1200,7 +1200,7 @@ select.codex-input {
     }
 }
 
-/* ========== Mobile Responsive ========== */
+
 @media (max-width: 1024px) {
     .main-container {
         flex-direction: column;
@@ -1379,7 +1379,7 @@ select.codex-input {
     }
 }
 
-/* Small mobile devices */
+
 @media (max-width: 380px) {
     :root {
         --slot-size: var(--slot-size-small);
@@ -1395,7 +1395,7 @@ select.codex-input {
     }
 }
 
-/* Touch device optimizations */
+
 @media (hover: none) {
     .item-slot:hover {
         transform: none;
@@ -1420,11 +1420,11 @@ select.codex-input {
     }
 }
 
-/* Mobile-specific fixes */
+
 @supports (-webkit-touch-callout: none) {
     .inventory-grid {
-        /* Prevent scroll issues on iOS/Android */
-        -webkit-overflow-scrolling: touch; /* still needed for older iOS */
+        
+        -webkit-overflow-scrolling: touch; 
     }
 
     .modal-content {
@@ -1432,7 +1432,7 @@ select.codex-input {
     }
 }
 
-/* Prevent text selection on UI elements */
+
 .codex-btn,
 .category-item,
 .item-slot,
@@ -1440,7 +1440,7 @@ select.codex-input {
     user-select: none;
 }
 
-/* ========== Theme Toggle ========== */
+
 .theme-toggle {
     margin-left: 12px;
     width: 48px;
@@ -1514,7 +1514,7 @@ select.codex-input {
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Sun icon styles */
+
 .theme-toggle .sun-icon {
     transition: transform 0.5s ease;
 }
@@ -1528,7 +1528,7 @@ select.codex-input {
     to { transform: rotate(360deg); }
 }
 
-/* Moon icon styles */
+
 .theme-toggle .moon-icon {
     transition: transform 0.5s ease;
 }
@@ -1558,7 +1558,7 @@ select.codex-input {
     transform: scale(1.2);
 }
 
-/* Light theme styles */
+
 [data-theme="light"] .theme-toggle {
     background: linear-gradient(145deg, #ffffff, #e8e5e0);
     border-color: #d1c4a8;
@@ -1588,7 +1588,7 @@ select.codex-input {
     opacity: 0.1;
 }
 
-/* Additional Light Theme Optimizations */
+
 [data-theme="light"] .sidebar {
     background: var(--bg-elevated);
     border-color: var(--glass-border);
@@ -1749,12 +1749,12 @@ input, select, textarea {
                 color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-/* Exclude certain elements from transition for better performance */
+
 .item-image img {
     transition: none;
 }
 
-/* ========== Animations ========== */
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1765,7 +1765,7 @@ input, select, textarea {
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* ========== Batch Upload Modal Styles ========== */
+
 .batch-file-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -1814,7 +1814,7 @@ input, select, textarea {
     cursor: pointer;
 }
 
-/* Light theme adjustments */
+
 [data-theme="light"] .batch-file-thumb {
     border-color: var(--glass-border);
 }
@@ -1844,7 +1844,7 @@ input, select, textarea {
     transition: width 0.3s ease;
 }
 
-/* Apply animations to elements */
+
 .inventory-grid .item-slot {
     animation: fadeIn 0.3s ease-out both;
 }
@@ -1853,7 +1853,7 @@ input, select, textarea {
     animation: slideIn 0.2s ease-out both;
 }
 
-/* Improved focus states for accessibility */
+
 .codex-input:focus,
 .codex-btn:focus,
 .category-item:focus {
@@ -1861,7 +1861,7 @@ input, select, textarea {
     outline-offset: 2px;
 }
 
-/* Custom scrollbar for webkit browsers */
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -1881,13 +1881,13 @@ input, select, textarea {
     background: var(--gold-primary);
 }
 
-/* Loading skeleton animation */
+
 @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
 }
 
-/* Responsive improvements */
+
 @media (max-width: 768px) {
     .theme-toggle {
         margin-left: 8px;
@@ -1907,7 +1907,7 @@ input, select, textarea {
     color: #6a4c00;
 }
 
-/* ── Toast Notification ─────────────────────────────────── */
+
 .toast-notification {
     position: fixed;
     bottom: 24px;
@@ -1930,9 +1930,9 @@ input, select, textarea {
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ========== Mobile Modal & Upload Fixes ========== */
+
 @media (max-width: 768px) {
-    /* Modal full-screen on mobile */
+    
     .modal-overlay {
         padding: 0;
         align-items: flex-start;
@@ -1945,14 +1945,14 @@ input, select, textarea {
         animation: none;
     }
 
-    /* Override inline style padding:24px on modal forms */
+    
     .modal-panel form,
     .modal-panel > div[style*="padding:24px"],
     .modal-panel > div > div[style*="padding:24px"] {
         padding: 16px !important;
     }
 
-    /* Upload area shrink */
+    
     .upload-area {
         padding: 20px !important;
     }
@@ -1961,7 +1961,7 @@ input, select, textarea {
         min-height: 100px !important;
     }
 
-    /* Upload preview: stack vertically on mobile */
+    
     .upload-area div[style*="display:flex;align-items:center;gap:20px"] {
         flex-direction: column !important;
         gap: 12px !important;
@@ -1972,7 +1972,7 @@ input, select, textarea {
         max-height: 120px;
     }
 
-    /* Override inline margin-top on form sections */
+    
     .modal-panel div[style*="margin-top:20px"] {
         margin-top: 12px !important;
     }
@@ -1981,13 +1981,13 @@ input, select, textarea {
         margin-top: 10px !important;
     }
 
-    /* Override inline footer bar spacing */
+    
     .modal-panel div[style*="margin-top:24px;padding-top:20px"] {
         margin-top: 16px !important;
         padding-top: 12px !important;
     }
 
-    /* Toolbar select width */
+    
     .toolbar-search input,
     select.codex-input[style*="width:120px"] {
         width: 100% !important;
@@ -2011,7 +2011,7 @@ input, select, textarea {
         font-size: 0.75rem;
     }
 
-    /* Batch file list */
+    
     .batch-file-list {
         grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
         max-height: 150px;
@@ -2022,17 +2022,17 @@ input, select, textarea {
         height: 50px;
     }
 
-    /* Emotions modal list */
+    
     .modal-panel div[style*="padding:40px"] {
         padding: 20px !important;
     }
 
-    /* Confirm dialog */
+    
     .modal-panel[style*="max-width:400px"] {
         max-width: 100% !important;
     }
 
-    /* Toast notification */
+    
     .toast-notification {
         left: 12px;
         right: 12px;
@@ -2217,7 +2217,7 @@ input, select, textarea {
     background: var(--bg-elevated);
 }
 
-/* Skeleton grid responsive */
+
 @media (max-width: 1200px) {
     .skeleton-grid {
         grid-template-columns: repeat(auto-fill, minmax(var(--slot-size-tablet), 1fr));
@@ -2250,7 +2250,7 @@ input, select, textarea {
         width: 100%;
     }
 }
-/* Targeted mobile polish for the emoji manager shell. */
+
 .codex-btn,
 .category-item,
 .pagination-btn,
@@ -2455,11 +2455,9 @@ input, select, textarea {
     }
 }
 
-/* ══════════════════════════════════════════
-   审核区 (Pending Review) 样式
-   ══════════════════════════════════════════ */
 
-/* ── 分区切换器 (Tabs) ── */
+
+
 .section-switcher {
     display: flex;
     flex-direction: column;
@@ -2526,14 +2524,14 @@ input, select, textarea {
     line-height: 1.3;
 }
 
-/* ── 侧边栏分隔线 ── */
+
 .sidebar-divider {
     height: 1px;
     background: var(--glass-border);
     margin: 2px 12px 6px;
 }
 
-/* ── 侧边栏容量条 ── */
+
 .pending-sidebar-stats {
     padding: 8px 14px;
 }
@@ -2596,7 +2594,7 @@ input, select, textarea {
     animation: pulse-warn 2s infinite;
 }
 
-/* ── 审核区进度条（主面板顶部） ── */
+
 .pending-progress {
     padding: 14px 20px;
     border-bottom: 1px solid var(--glass-border);
@@ -2647,7 +2645,7 @@ input, select, textarea {
     50% { opacity: 0.5; }
 }
 
-/* ── 审核区网格 ── */
+
 .pending-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -2658,7 +2656,7 @@ input, select, textarea {
     align-content: start;
 }
 
-/* ── 审核卡片 ── */
+
 .pending-card {
     display: flex;
     flex-direction: row;
@@ -2847,7 +2845,7 @@ input, select, textarea {
     border-color: #f87171;
 }
 
-/* ── 审核区批量操作 ── */
+
 .pending-batch-actions {
     display: flex;
     gap: 6px;
@@ -2868,7 +2866,7 @@ input, select, textarea {
     color: #e53e3e !important;
 }
 
-/* ── 响应式：审核区 ── */
+
 @media (max-width: 768px) {
     .pending-grid {
         grid-template-columns: 1fr;
