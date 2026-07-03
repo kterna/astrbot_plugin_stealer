@@ -1090,6 +1090,27 @@ select.codex-input {
     background: rgba(212, 180, 110, 0.05);
 }
 
+.batch-upload-area.is-drag-active {
+    border-color: var(--gold-primary);
+    background: rgba(212, 180, 110, 0.12);
+    box-shadow: 0 0 0 1px rgba(212, 180, 110, 0.25) inset;
+}
+
+.native-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .upload-preview {
     max-width: 200px;
     max-height: 200px;
