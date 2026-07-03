@@ -735,13 +735,19 @@ export const TEMPLATE = `
 
         <form @submit.prevent="submitBatchUpload" style="padding:24px">
             <div v-if="!batchTaskId">
-                <div class="upload-area" @click="triggerBatchFileInput" style="min-height:150px">
+                <div class="upload-area batch-upload-area" :class="{ 'is-drag-active': batchDragActive }"
+                    @click="triggerBatchFileInput"
+                    @dragenter="onBatchDragEnter"
+                    @dragover="onBatchDragOver"
+                    @dragleave="onBatchDragLeave"
+                    @drop="onBatchDrop"
+                    style="min-height:150px">
                     <input v-if="!batchFolderMode" ref="batchFileInput" type="file" accept="image/*" multiple
-                        @change="handleBatchFileSelect" style="display:none">
+                        @change="handleBatchFileSelect" class="native-file-input">
                     <input v-else ref="batchFolderInput" type="file" accept="image/*" webkitdirectory
-                        @change="handleBatchFileSelect" style="display:none">
+                        @change="handleBatchFileSelect" class="native-file-input">
 
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px" @click.stop>
                         <label
                             style="font-size:12px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:4px">
                             <input type="checkbox" v-model="batchFolderMode" style="accent-color:var(--gold-primary)">
