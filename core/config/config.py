@@ -17,6 +17,7 @@ class PluginConfig(BaseModel):
     auto_send_meme: bool = False
     meme_chance: float = 0.2
     send_meme_as_gif: bool = False
+    meme_send_char_delay: float = 0.3
     meme_send_delay: float = 5.0
     meme_send_delay_random: bool = False
     meme_send_delay_max: float = 8.0

@@ -112,6 +112,7 @@ class Main(Star):
         self.meme_send_delay = self.plugin_config.meme_send_delay
         self.meme_send_delay_random = self.plugin_config.meme_send_delay_random
         self.meme_send_delay_max = self.plugin_config.meme_send_delay_max
+        self.meme_send_char_delay = self.plugin_config.meme_send_char_delay
         self.max_reg_num = self.plugin_config.max_reg_num
         self.content_filtration = self.plugin_config.content_filtration
         self.content_filtration_fail_open = self.plugin_config.content_filtration_fail_open

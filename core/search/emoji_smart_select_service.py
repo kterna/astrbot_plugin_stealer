@@ -634,7 +634,7 @@ class EmojiSmartSelectService:
         if await self._try_send_telegram_sticker(event, emoji_path):
             return "telegram_sticker"
 
-        if await _send_qq_image_as_sticker(event, emoji_path):
+        if await _send_qq_image_as_sticker(event, emoji_path, plugin=self.plugin):
             return "qq_sticker"
 
         if await self._send_emoji_file_directly(event, emoji_path):

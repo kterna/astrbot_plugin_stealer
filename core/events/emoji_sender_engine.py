@@ -18,6 +18,7 @@ async def _send_qq_image_as_sticker(
     event: AstrMessageEvent,
     file_path: str,
     summary: str = "[动画表情]",
+    plugin: Any = None,
 ) -> bool:
     """在 QQ (aiocqhttp) 平台发送表情包时修改 summary 外显。"""
     try:
@@ -31,7 +32,14 @@ async def _send_qq_image_as_sticker(
     if not file_path or not os.path.exists(file_path):
         return False
     try:
-        chain = MessageChain(chain=[Image(file=file_path)])
+        file_source: str = file_path
+        if plugin and getattr(plugin, "send_meme_as_gif", False):
+            image_processor = getattr(plugin, "image_processor_service", None)
+            if image_processor:
+                b64 = await image_processor._file_to_gif_base64(file_path)
+                if b64:
+                    file_source = f"base64://{b64}"
+        chain = MessageChain(chain=[Image(file=file_source)])
         obmsg = await event._parse_onebot_json(chain)
         obmsg[0]["data"]["summary"] = summary
         await event.bot.send(event.message_obj.raw_message, obmsg)
@@ -351,15 +359,22 @@ class EmojiSenderEngine:
         sent = False
         for path in emoji_paths:
             try:
-                if not await _send_qq_image_as_sticker(event, path):
+                if not await _send_qq_image_as_sticker(event, path, plugin=self.plugin):
                     await event.send(Image(file=path))
                 sent = True
             except Exception as e:
                 logger.warning(f"[EmojiSenderEngine] 发送表情包失败: {e}")
         return sent
 
-    def get_meme_send_delay(self) -> float:
+    def get_meme_send_delay(self, text: str = "", task_start: float = 0.0) -> float:
         """获取表情包发送延迟（秒）。"""
+        char_delay = getattr(self.plugin, "meme_send_char_delay", 0.0)
+        if char_delay > 0 and text:
+            desired = len(text) * char_delay
+            if task_start > 0:
+                elapsed = asyncio.get_event_loop().time() - task_start
+                return max(0.0, desired - elapsed)
+            return desired
         delay = getattr(self.plugin, "meme_send_delay", 0.5)
         delay_random = getattr(self.plugin, "meme_send_delay_random", 0.0)
         try:
@@ -389,6 +404,7 @@ class EmojiSenderEngine:
         本方法成功发送后再标记 mark_active_sent 以记录实际发送时间。
         """
         try:
+            task_start = asyncio.get_event_loop().time()
             final_emotions = list(emotions or [])
 
             if getattr(self.plugin, "enable_natural_emotion_analysis", False) and hasattr(
@@ -406,7 +422,12 @@ class EmojiSenderEngine:
             if not final_emotions:
                 return
 
-            delay = self.get_meme_send_delay()
+            result = event.get_result()
+            if result and not result.get_plain_text().strip():
+                logger.debug("[EmojiSenderEngine] 主回复已被置空，跳过自动表情")
+                return
+
+            delay = self.get_meme_send_delay(text, task_start)
             if delay > 0:
                 await asyncio.sleep(delay)
 
