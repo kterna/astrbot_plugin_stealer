@@ -34,7 +34,6 @@ class PluginConfig(BaseModel):
 
     # === 模型配置 ===
     vision_provider_id: str = ""
-    napcat_token: str = ""  # NapCat 访问令牌
 
     # === 内部常量/高级配置 ===
     max_reg_num: int = 100

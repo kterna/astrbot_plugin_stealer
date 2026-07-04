@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.4] - 2026-07-04
+
+### fixed
+- 修复 `enable_embedding_search` 开关未被所有写入路径尊重的问题：入库、审核通过、初始化回填均改为仅在开关开启时操作，避免关闭后仍产生无效向量与重复日志 (#86)
+- 修复 `main.py` 中嵌入服务初始化块的 Python 缩进错误 (#86)
+- `EmbeddingService` 新增 provider 负缓存：同配置下未找到 provider 时不再重复探测与打印日志；配置变化（开关/provider ID）时自动重置状态 (#86)
+- 移除 `napcat_token` 配置及其作为 `Authorization` header 附加到任意图片下载 URL 的逻辑，避免 token 泄露与部分服务器/安全 agent 拒绝请求 (#86)
+
+### changed
+- 清理 `_conf_schema.json`、i18n（zh-CN/en-US/ru-RU）与 README 中已废弃的 `napcat_token` 相关文案 (#86)
+
 ## [2.7.3] - 2026-07-03
 
 ### fixed

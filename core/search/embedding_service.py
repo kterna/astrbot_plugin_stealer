@@ -31,6 +31,11 @@ class EmbeddingService:
         self._provider: Any | None = None
         self._provider_dim: int = 0
 
+        # Provider 负缓存：同一配置下未找到时不再重复探测/打印日志
+        self._provider_not_found: bool = False
+        self._last_enable_embedding_search: bool | None = None
+        self._last_embedding_provider_id: str | None = None
+
         # FaissVecDB
         self._faiss_db: Any | None = None
         self._faiss_available: bool | None = None  # None=未检测
@@ -45,10 +50,41 @@ class EmbeddingService:
     #  Provider（对齐 livingmemory _initialize_providers）
     # ═══════════════════════════════════════════════════
 
+    def _embedding_enabled(self) -> bool:
+        """读取插件配置中的嵌入检索开关。"""
+        return getattr(self.plugin, "enable_embedding_search", True)
+
+    def _reset_provider_state_if_changed(self) -> None:
+        """配置开关或 provider ID 变化时重置 provider 探测状态。"""
+        current_enable = self._embedding_enabled()
+        current_id = str(getattr(self.plugin, "embedding_provider_id", "") or "").strip()
+        if (
+            self._last_enable_embedding_search != current_enable
+            or self._last_embedding_provider_id != current_id
+        ):
+            self._provider = None
+            self._provider_dim = 0
+            self._provider_not_found = False
+            self._faiss_available = None
+            self._faiss_db = None
+            self.invalidate_cache()
+            self._last_enable_embedding_search = current_enable
+            self._last_embedding_provider_id = current_id
+
     def _get_provider(self) -> Any | None:
         """获取 EmbeddingProvider（优先配置 ID，留空取首个）。"""
+        # 开关关闭时直接跳过，不触发 provider 探测与日志
+        if not self._embedding_enabled():
+            return None
+
+        self._reset_provider_state_if_changed()
+
         if self._provider is not None:
             return self._provider
+
+        # 负缓存：同一配置下已确认无 provider，直接返回避免重复日志
+        if self._provider_not_found:
+            return None
 
         provider_id = getattr(self.plugin, "embedding_provider_id", None) or ""
 
@@ -83,6 +119,7 @@ class EmbeddingService:
             return self._provider
 
         logger.info("[Embedding] 未找到 Embedding Provider，嵌入检索不可用")
+        self._provider_not_found = True
         return None
 
     def _find_provider_by_id(self, provider_id: str) -> Any | None:
@@ -298,6 +335,10 @@ class EmbeddingService:
 
     async def initialize(self) -> None:
         """异步初始化（对齐 livingmemory 的 initialize 流程）。"""
+        # 开关关闭时完全跳过，不探测 provider、不输出日志
+        if not self._embedding_enabled():
+            return
+
         # 1. Provider 就绪检查
         provider = self._get_provider()
         if provider is None:
@@ -348,6 +389,10 @@ class EmbeddingService:
 
         失败不阻塞入库流程。
         """
+        # 开关关闭时跳过写入，避免触发 provider 探测
+        if not self._embedding_enabled():
+            return False
+
         text = self._build_search_text(entry)
         if not text:
             return False
@@ -550,6 +595,10 @@ class EmbeddingService:
         对齐 livingmemory index_rebuild 的批量处理模式。
         关键：回填到当前活跃的存储后端（FaissVecDB 或 SQLite），不混用。
         """
+        # 开关关闭时跳过回填，避免触发 provider 探测与重复日志
+        if not self._embedding_enabled():
+            return 0
+
         if batch_size is None:
             batch_size = self.BACKFILL_BATCH_SIZE
 

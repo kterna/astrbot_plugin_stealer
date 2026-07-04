@@ -125,7 +125,6 @@ class Main(Star):
             self.plugin_config.DEFAULT_CATEGORIES
         )
         self.vision_provider_id = self._load_vision_provider_id()
-        self.napcat_token = self._load_napcat_token()
         self.enable_natural_emotion_analysis = self.plugin_config.enable_natural_emotion_analysis
         self.emotion_analysis_provider_id = self.plugin_config.emotion_analysis_provider_id
         self.image_processing_cooldown = self.plugin_config.image_processing_cooldown
@@ -138,13 +137,6 @@ class Main(Star):
         """加载视觉模型提供商ID。"""
         provider_id = getattr(self.plugin_config, "vision_provider_id", "")
         return str(provider_id).strip() if provider_id else ""
-
-    def _load_napcat_token(self) -> str:
-        """加载 NapCat 访问令牌。"""
-        user_token = getattr(self.plugin_config, "napcat_token", "")
-        if user_token:
-            return str(user_token).strip()
-        return ""
 
     def _apply_prompts(self, prompts: dict) -> None:
         """应用提示词配置。"""
@@ -1265,17 +1257,18 @@ class Main(Star):
             self.task_scheduler.create_task("raw_cleanup_loop", self._raw_cleanup_loop())
             self.task_scheduler.create_task("capacity_control_loop", self._capacity_control_loop())
 
-            # 初始化嵌入向量服务 + 回填旧数据
-            try:
-                smart_service = getattr(self.emoji_selector, "_smart_select_service", None)
-                if smart_service and smart_service._embedding_service:
-                    await smart_service._embedding_service.initialize()
-                    # 同步回填旧数据（分批处理，每批 20 条）
-                    backfilled = await smart_service._embedding_service.backfill_existing(batch_size=20)
-                    if backfilled > 0:
-                        logger.info(f"[Embedding] 旧数据回填完成: {backfilled} 条新向量")
-            except Exception as e:
-                logger.warning(f"[Embedding] 初始化失败: {e}")
+            # 初始化嵌入向量服务 + 回填旧数据（仅在开启嵌入检索时）
+            if self.enable_embedding_search:
+                try:
+                    smart_service = getattr(self.emoji_selector, "_smart_select_service", None)
+                    if smart_service and smart_service._embedding_service:
+                        await smart_service._embedding_service.initialize()
+                        # 同步回填旧数据（分批处理，每批 20 条）
+                        backfilled = await smart_service._embedding_service.backfill_existing(batch_size=20)
+                        if backfilled > 0:
+                            logger.info(f"[Embedding] 旧数据回填完成: {backfilled} 条新向量")
+                except Exception as e:
+                    logger.warning(f"[Embedding] 初始化失败: {e}")
 
             logger.info("[Stealer] 插件初始化完成")
         except Exception as e:

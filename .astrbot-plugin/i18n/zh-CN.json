@@ -69,10 +69,6 @@
             "description": "存储清理策略",
             "hint": "conservative=只清理失效索引和临时文件，balanced=额外清理孤儿文件和缩略图缓存，aggressive=额外清理 raw 目录"
         },
-        "napcat_token": {
-            "description": "NapCat 访问令牌",
-            "hint": "仅在特殊网络环境下需要：Docker 部署 AstrBot + 本地部署 NapCat 时，如果自动获取 token 失败，可手动填写此项。留空则自动从 OneBot 适配器配置中获取"
-        },
         "steal_meme": {
             "description": "开启表情包偷取功能",
             "hint": "开启后会监听并保存聊天中的图片，请确保有视觉模型支持"

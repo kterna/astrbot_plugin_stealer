@@ -71,10 +71,6 @@ class EventHandler:
         """关闭共享的 aiohttp session（已迁移到 ImageDownloadService）。"""
         await self._image_download_service.close()
 
-    def _build_download_headers(self) -> dict[str, str]:
-        """构建下载请求头（已迁移到 ImageDownloadService）。"""
-        return self._image_download_service.build_headers()
-
     @staticmethod
     def _detect_download_file_type(content_type: str, content: bytes) -> tuple[str, bool]:
         """检测下载文件类型（已迁移到 ImageDownloadService）。"""

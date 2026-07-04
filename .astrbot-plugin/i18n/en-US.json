@@ -69,10 +69,6 @@
             "description": "Storage cleanup strategy",
             "hint": "conservative=clean stale index rows and temp files only, balanced=also clean orphan files and thumbnail cache, aggressive=also clean raw files."
         },
-        "napcat_token": {
-            "description": "NapCat access token",
-            "hint": "Only needed in special network setups: Docker AstrBot + local NapCat where auto token detection fails. Leave blank to auto-detect from OneBot adapter config."
-        },
         "steal_meme": {
             "description": "Enable emoji stealing",
             "hint": "Monitors and saves images from chat. Requires visual model support."

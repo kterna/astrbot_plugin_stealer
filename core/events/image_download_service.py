@@ -45,12 +45,13 @@ class ImageDownloadService:
             self._aiohttp_session = None
 
     def build_headers(self) -> dict[str, str]:
-        headers: dict[str, str] = {}
-        if self.plugin is not None:
-            napcat_token = getattr(self.plugin, "napcat_token", "")
-            if napcat_token:
-                headers["Authorization"] = f"Bearer {napcat_token}"
-        return headers
+        """构建下载请求头。
+
+        历史原因：这里曾为 NapCat 下发 Authorization header，但 NapCat 的
+        图片 URL 已经是本地可访问路径或不需要该 token，且把 token 附加到
+        任意第三方图片 URL 会导致安全/兼容问题，因此不再附加任何认证头。
+        """
+        return {}
 
     @staticmethod
     def detect_file_type(content_type: str, content: bytes) -> tuple[str, bool]:

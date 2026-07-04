@@ -342,6 +342,9 @@ class ImageProcessorService:
                 entry[k] = v
         idx[cat_path] = entry
 
+        if not getattr(self.plugin, "enable_embedding_search", True):
+            return True, idx
+
         # 入库后写入嵌入向量（失败不阻塞）
         try:
             smart_service = getattr(

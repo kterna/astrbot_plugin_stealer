@@ -154,7 +154,6 @@ All settings can be modified in the AstrBot admin panel.
 | Setting | Default | Description |
 |:---|:---|:---|
 | **Vision model** | `""` | For image classification; leave blank to auto-use the global image caption model |
-| **NapCat access token** | `""` | Only needed when auto-detection fails in special network setups |
 
 ### Group Filtering
 

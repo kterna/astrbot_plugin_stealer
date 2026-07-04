@@ -909,14 +909,15 @@ class PluginAPI:
                 raise RuntimeError("insert emoji returned 0")
             db.delete_pending(pending_id)
 
-            # 审核通过后写入嵌入向量（失败不阻塞）
-            try:
-                smart_service = getattr(getattr(self.plugin, "emoji_selector", None), "_smart_select_service", None)
-                if smart_service and smart_service._embedding_service:
-                    await smart_service._embedding_service.insert_emoji(cat_path, emoji_entry)
-                    smart_service._invalidate_embedding_index()
-            except Exception as embed_err:
-                logger.debug(f"审核通过后嵌入写入失败（不阻塞）: {embed_err}")
+            # 审核通过后写入嵌入向量（仅在开启嵌入检索时，失败不阻塞）
+            if getattr(self.plugin, "enable_embedding_search", True):
+                try:
+                    smart_service = getattr(getattr(self.plugin, "emoji_selector", None), "_smart_select_service", None)
+                    if smart_service and smart_service._embedding_service:
+                        await smart_service._embedding_service.insert_emoji(cat_path, emoji_entry)
+                        smart_service._invalidate_embedding_index()
+                except Exception as embed_err:
+                    logger.debug(f"审核通过后嵌入写入失败（不阻塞）: {embed_err}")
 
             return True, ""
         except Exception as e:
