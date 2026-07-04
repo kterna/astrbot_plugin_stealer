@@ -192,6 +192,7 @@ createApp({
         const batchUploadOpen = ref(false);
         const batchUploading = ref(false);
         const batchFolderMode = ref(false);
+        const batchDragActive = ref(false);
         const batchFiles = ref([]);
         const batchPreviews = ref([]);
         const batchUploadError = ref(null);
@@ -1074,6 +1075,7 @@ createApp({
             batchFiles.value = [];
             batchPreviews.value = [];
             batchUploadError.value = null;
+            batchDragActive.value = false;
             batchTaskId.value = null;
             batchTaskStatus.value = null;
             Object.assign(batchUploadForm, {
@@ -1085,31 +1087,95 @@ createApp({
 
         const closeBatchUploadModal = () => {
             batchUploadOpen.value = false;
+            batchDragActive.value = false;
             if (batchPollInterval) {
                 clearInterval(batchPollInterval);
                 batchPollInterval = null;
             }
         };
 
+        const resetBatchInput = (inputEl) => {
+            if (inputEl) inputEl.value = '';
+        };
+
+        const normalizeImageFiles = (fileList) => Array.from(fileList || []).filter((file) =>
+            file && String(file.type || '').startsWith('image/')
+        );
+
+        const setBatchFiles = (files) => {
+            batchPreviews.value.forEach((url) => URL.revokeObjectURL(url));
+            batchFiles.value = files;
+            batchPreviews.value = files.map((file) => URL.createObjectURL(file));
+        };
+
         const clearBatchFiles = () => {
-            batchFiles.value = [];
-            batchPreviews.value.forEach(url => URL.revokeObjectURL(url));
-            batchPreviews.value = [];
+            setBatchFiles([]);
+            resetBatchInput(batchFileInput.value);
+            resetBatchInput(batchFolderInput.value);
         };
 
         const batchFileInput = ref(null);
         const batchFolderInput = ref(null);
+        const openNativeFilePicker = (inputEl) => {
+            if (!inputEl) return;
+            resetBatchInput(inputEl);
+            if (typeof inputEl.showPicker === 'function') {
+                try {
+                    inputEl.showPicker();
+                    return;
+                } catch (e) {
+                    console.warn('showPicker failed, falling back to click():', e);
+                }
+            }
+            inputEl.click();
+        };
         const triggerBatchFileInput = () => {
             const el = batchFolderMode.value ? batchFolderInput.value : batchFileInput.value;
-            if (el) el.click();
+            openNativeFilePicker(el);
         };
 
         const handleBatchFileSelect = (e) => {
-            const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+            const files = normalizeImageFiles(e.target?.files);
             if (files.length === 0) return;
-            batchPreviews.value.forEach(url => URL.revokeObjectURL(url));
-            batchFiles.value = files;
-            batchPreviews.value = files.map(f => URL.createObjectURL(f));
+            batchUploadError.value = null;
+            setBatchFiles(files);
+            resetBatchInput(e.target);
+        };
+
+        const batchAreaContainsDragTarget = (event) => {
+            const currentTarget = event.currentTarget;
+            const relatedTarget = event.relatedTarget;
+            return Boolean(currentTarget && relatedTarget && currentTarget.contains(relatedTarget));
+        };
+
+        const onBatchDragEnter = (event) => {
+            event.preventDefault();
+            batchDragActive.value = true;
+        };
+
+        const onBatchDragOver = (event) => {
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'copy';
+            }
+            batchDragActive.value = true;
+        };
+
+        const onBatchDragLeave = (event) => {
+            if (batchAreaContainsDragTarget(event)) return;
+            batchDragActive.value = false;
+        };
+
+        const onBatchDrop = (event) => {
+            event.preventDefault();
+            batchDragActive.value = false;
+            const files = normalizeImageFiles(event.dataTransfer?.files);
+            if (files.length === 0) {
+                batchUploadError.value = t('pages.dashboard.alerts.no_images_dropped', 'No image files were dropped.');
+                return;
+            }
+            batchUploadError.value = null;
+            setBatchFiles(files);
         };
 
         const formatBatchSize = () => {
@@ -1188,8 +1254,8 @@ createApp({
         const resetBatchUpload = () => {
             batchTaskId.value = null;
             batchTaskStatus.value = null;
-            batchFiles.value = [];
-            batchPreviews.value = [];
+            batchDragActive.value = false;
+            clearBatchFiles();
             batchUploadError.value = null;
         };
 
@@ -1569,6 +1635,7 @@ createApp({
             batchUploadOpen,
             batchUploading,
             batchFolderMode,
+            batchDragActive,
             batchFiles,
             batchPreviews,
             batchUploadError,
@@ -1586,6 +1653,10 @@ createApp({
             triggerBatchFileInput,
             clearBatchFiles,
             handleBatchFileSelect,
+            onBatchDragEnter,
+            onBatchDragOver,
+            onBatchDragLeave,
+            onBatchDrop,
             formatBatchSize,
             submitBatchUpload,
             resetBatchUpload,
