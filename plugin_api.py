@@ -1361,17 +1361,21 @@ class PluginAPI:
                             await asyncio.to_thread(lambda: tmp.write_bytes(fd["content"]))
                             proc = self.plugin.image_processor_service
                             if proc:
-                                rc, rt, rd, _, rs = await proc.classify_image(
+                                rc, rt, rd, _, rs, scope_meta = await proc.classify_image(
                                     event=None,
                                     file_path=str(tmp),
                                     categories=list(self._cfg.categories or []),
                                     content_filtration=False,
+                                    include_scope=True,
                                 )
                                 if rc and rc != getattr(proc, "CATEGORY_FILTERED", None):
                                     final_cat = rc
                                     tags = rt or []
                                     desc = rd or ""
                                     scenes = rs or []
+                                    # Batch uploads usually have no origin_target, so local scope
+                                    # cannot be enforced. Keep the result public unless the caller
+                                    # later assigns an origin through the WebUI.
                         except Exception as e:
                             logger.warning(f"自动分析失败: {e}")
                         finally:
@@ -1599,11 +1603,12 @@ class PluginAPI:
             if not file_path:
                 return jsonify({"success": False, "error": "缺少 hash 或 base64 图片数据"})
 
-            cat, tags, desc, _, scenes = await proc.classify_image(
+            cat, tags, desc, _, scenes, scope_meta = await proc.classify_image(
                 event=None,
                 file_path=file_path,
                 categories=list(self._cfg.categories or []),
                 content_filtration=False,
+                include_scope=True,
             )
             if cat == getattr(proc, "CATEGORY_FILTERED", None):
                 return jsonify({"success": False, "error": "图片内容审核不通过"})
@@ -1617,6 +1622,8 @@ class PluginAPI:
                     "tags": tags,
                     "description": desc,
                     "scenes": scenes or [],
+                    "scope_mode": scope_meta.get("scope_mode", "public") if scope_meta else "public",
+                    "scope_reason": scope_meta.get("scope_reason", "") if scope_meta else "",
                 }
             )
         except Exception as e:

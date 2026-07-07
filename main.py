@@ -116,6 +116,7 @@ class Main(Star):
         self.max_reg_num = self.plugin_config.max_reg_num
         self.content_filtration = self.plugin_config.content_filtration
         self.content_filtration_fail_open = self.plugin_config.content_filtration_fail_open
+        self.auto_local_scope_by_vlm = self.plugin_config.auto_local_scope_by_vlm
         self.storage_cleanup_strategy = self.plugin_config.storage_cleanup_strategy
         self.smart_meme_selection = self.plugin_config.smart_meme_selection
         self.steal_meme = self.plugin_config.steal_meme

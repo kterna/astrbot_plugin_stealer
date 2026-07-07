@@ -54,6 +54,12 @@
     "default": false,
     "hint": "仅作为审核服务异常时的策略提示；明确审核不通过的图片仍不会入库"
   },
+  "auto_local_scope_by_vlm": {
+    "description": "VLM 自动判断本群限定",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后，视觉模型会在分类时同时判断图片是否应仅来源群可用。涉及真人、小团体、内部工作/学习资料、聊天截图、证件票据、隐私信息、非通用表情包等内容会自动标记为 local；普通通用表情包标记为 public。"
+  },
   "_send_section": {
     "description": "=== 发送设置 ===",
     "type": "text",

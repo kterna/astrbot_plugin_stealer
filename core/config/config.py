@@ -39,6 +39,7 @@ class PluginConfig(BaseModel):
     max_reg_num: int = 100
     content_filtration: bool = False  # 内容审核开关
     content_filtration_fail_open: bool = False
+    auto_local_scope_by_vlm: bool = True  # VLM 自动判断是否仅来源群可用
     storage_cleanup_strategy: str = "balanced"
     image_processing_cooldown: int = 30
     enable_natural_emotion_analysis: bool = True  # 情绪识别模式

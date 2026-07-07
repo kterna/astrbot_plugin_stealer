@@ -102,6 +102,11 @@ class ImageProcessorService:
         self.vision_provider_id = (
             str(self.plugin_config.vision_provider_id or "") if self.plugin_config else ""
         )
+        self.auto_local_scope_by_vlm = (
+            bool(getattr(self.plugin_config, "auto_local_scope_by_vlm", True))
+            if self.plugin_config
+            else True
+        )
         # 框架 VLM provider 缓存，None 表示未查询过
         self._cached_framework_vlm_id: str | None = None
 
@@ -244,6 +249,11 @@ class ImageProcessorService:
             self.vision_provider_id = vision_provider_id
             # 插件 provider 变更时，重置框架缓存以便重新解析
             self._cached_framework_vlm_id = None
+        self.auto_local_scope_by_vlm = (
+            bool(getattr(self.plugin_config, "auto_local_scope_by_vlm", True))
+            if self.plugin_config
+            else True
+        )
         if emoji_classification_prompt is not None:
             self.emoji_classification_prompt = emoji_classification_prompt
         if emoji_classification_with_filter_prompt is not None:
@@ -541,7 +551,9 @@ class ImageProcessorService:
                         is_temp,
                         hash_val,
                         idx,
-                        extra_meta=extra_meta,
+                        extra_meta=self._merge_scope_meta(
+                            extra_meta, cached.get("scope_meta", {})
+                        ),
                         from_cache=True,
                         phash_val=phash_val,
                         to_pending=to_pending,
@@ -551,15 +563,16 @@ class ImageProcessorService:
             raw_path = await self._move_to_raw(file_path, hash_val, is_temp)
 
             # 5. VLM 分类（锁外，耗时操作）
-            category, tags, desc, emotion, scenes = await self.classify_image(
+            category, tags, desc, emotion, scenes, scope_meta = await self.classify_image(
                 event=event,
                 file_path=raw_path,
                 categories=categories,
                 content_filtration=content_filtration,
+                include_scope=True,
             )
 
             # 6. 缓存结果（锁外）
-            self._put_image_cache(hash_val, category, tags, desc, emotion, scenes)
+            self._put_image_cache(hash_val, category, tags, desc, emotion, scenes, scope_meta)
 
             # 7. 处理分类结果（锁内）
             async with self._process_lock:
@@ -573,7 +586,7 @@ class ImageProcessorService:
                     False,
                     hash_val,
                     idx,
-                    extra_meta=extra_meta,
+                    extra_meta=self._merge_scope_meta(extra_meta, scope_meta),
                     from_cache=False,
                     already_in_raw=True,
                     phash_val=phash_val,
@@ -691,6 +704,7 @@ class ImageProcessorService:
         desc: str,
         emotion: str,
         scenes: list,
+        scope_meta: dict[str, str] | None = None,
     ) -> None:
         """写入分类缓存并淘汰过期条目。"""
         self._image_cache[hash_val] = {
@@ -699,9 +713,37 @@ class ImageProcessorService:
             "desc": desc,
             "emotion": emotion,
             "scenes": scenes,
+            "scope_meta": dict(scope_meta or {}),
             "timestamp": time.time(),
         }
         self._evict_image_cache()
+
+    def _merge_scope_meta(
+        self, extra_meta: dict[str, Any] | None, scope_meta: dict[str, str] | None
+    ) -> dict[str, Any] | None:
+        """Merge VLM scope decision into image metadata without overriding explicit scope."""
+        if not self.auto_local_scope_by_vlm:
+            return extra_meta
+
+        merged = dict(extra_meta or {})
+        if merged.get("scope_mode"):
+            return merged
+
+        raw_scope = str((scope_meta or {}).get("scope_mode", "") or "").strip().lower()
+        if raw_scope not in {"public", "local"}:
+            return merged or extra_meta
+
+        if raw_scope == "local" and not str(merged.get("origin_target", "") or "").strip():
+            logger.debug("VLM 建议 local 作用域，但缺少来源目标，回退为 public")
+            raw_scope = "public"
+
+        merged["scope_mode"] = raw_scope
+        reason = str((scope_meta or {}).get("scope_reason", "") or "").strip()
+        if reason:
+            logger.info(f"VLM 作用域判断: {raw_scope}，原因: {reason}")
+        else:
+            logger.info(f"VLM 作用域判断: {raw_scope}")
+        return merged
 
     async def _move_to_raw(self, file_path: str, hash_val: str, is_temp: bool) -> str:
         """将图片移动/复制到 raw 目录，返回 raw 路径。"""
@@ -882,7 +924,10 @@ class ImageProcessorService:
         file_path: str,
         categories=None,
         content_filtration=None,
-    ) -> tuple[str, list[str], str, str, list[str]]:
+        include_scope: bool = False,
+    ) -> tuple[str, list[str], str, str, list[str]] | tuple[
+        str, list[str], str, str, list[str], dict[str, str]
+    ]:
         """使用视觉模型对图片进行分类并返回详细信息。
 
         Args:
@@ -918,14 +963,17 @@ class ImageProcessorService:
             response = await self._call_vision_model(event, file_path, prompt)
 
             # 解析JSON响应
-            return self._parse_classification_response(response, file_path)
+            return self._parse_classification_response(
+                response, file_path, include_scope=include_scope
+            )
 
         except (FileNotFoundError, ValueError):
             # 配置错误 / 文件不存在，直接抛出不吞异常
             raise
         except Exception as e:
             logger.error(f"图片分类失败 [{file_path}]: {e}")
-            return "", [], "", "", []
+            parsed = ("", [], "", "", [])
+            return (*parsed, {}) if include_scope else parsed
 
     def _normalize_category(self, raw: str) -> str:
         """将 VLM 返回的分类文本规范化为有效分类名。
@@ -964,9 +1012,13 @@ class ImageProcessorService:
 
     # ===== 门面委托：ClassificationParser =====
 
-    def _parse_classification_response(self, response: str, file_path: str):
+    def _parse_classification_response(
+        self, response: str, file_path: str, include_scope: bool = False
+    ):
         """Parse the classification payload returned by the VLM（已迁移到 ClassificationParser）。"""
-        return self._classification_parser._parse_classification_response(response, file_path)
+        return self._classification_parser._parse_classification_response(
+            response, file_path, include_scope=include_scope
+        )
 
     def _sanitize_model_scalar(self, value):
         """Normalize single-value model outputs（已迁移到 ClassificationParser）。"""

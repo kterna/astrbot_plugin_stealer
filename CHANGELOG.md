@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### added
+- 新增 `auto_local_scope_by_vlm` 配置。启用后，VLM 分类会同时输出 `scope_mode` / `scope_reason`，自动将真人、小团体、内部资料、聊天截图、隐私信息、非通用表情包等图片标记为 `local`，普通通用表情包标记为 `public`。
+- WebUI 单图 VLM 分析接口返回作用域判断结果，便于前端展示或后续接入。
+
 ## [2.7.4] - 2026-07-04
 
 ### fixed

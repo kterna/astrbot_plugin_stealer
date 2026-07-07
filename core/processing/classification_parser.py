@@ -22,15 +22,18 @@ class ClassificationParser:
         return str(raw or "").strip().lower()
 
     def _parse_classification_response(
-        self, response: str, file_path: str
-    ) -> tuple[str, list[str], str, str, list[str]]:
+        self, response: str, file_path: str, include_scope: bool = False
+    ) -> tuple[str, list[str], str, str, list[str]] | tuple[
+        str, list[str], str, str, list[str], dict[str, str]
+    ]:
         """Parse the classification payload returned by the VLM."""
         response = response.strip()
 
         data = self._extract_json_payload(response)
         if data is None:
             logger.debug(f"JSON parse failed, fallback to legacy format: {response[:100]}")
-            return self._parse_legacy_format(response)
+            parsed = self._parse_legacy_format(response)
+            return (*parsed, {}) if include_scope else parsed
 
         approved = data.get("approved")
         reason = str(data.get("reason", ""))
@@ -40,12 +43,14 @@ class ClassificationParser:
             or "\u5ba1\u6838\u4e0d\u901a\u8fc7" in reason.encode("unicode_escape").decode("ascii")
         ):
             logger.warning(f"Image moderation rejected: {file_path}")
-            return self.CATEGORY_FILTERED, [], "", self.CATEGORY_FILTERED, []
+            parsed = (self.CATEGORY_FILTERED, [], "", self.CATEGORY_FILTERED, [])
+            return (*parsed, {}) if include_scope else parsed
 
         category = data.get("category", "")
         tags = data.get("tags", [])
         description = self._sanitize_model_scalar(data.get("description", "emoji")) or "emoji"
         scenes = data.get("scenes", [])
+        scope_meta = self._parse_scope_meta(data)
 
         normalized_category = self._normalize_category(category)
 
@@ -59,7 +64,48 @@ class ClassificationParser:
         elif not isinstance(scenes, list):
             scenes = []
 
-        return normalized_category, tags, description, normalized_category, scenes
+        parsed = (normalized_category, tags, description, normalized_category, scenes)
+        return (*parsed, scope_meta) if include_scope else parsed
+
+    def _parse_scope_meta(self, data: dict[str, Any]) -> dict[str, str]:
+        raw_scope = self._sanitize_model_scalar(
+            data.get("scope_mode")
+            or data.get("scope")
+            or data.get("visibility")
+            or data.get("privacy")
+            or ""
+        ).lower()
+
+        if raw_scope in {
+            "local",
+            "private",
+            "scoped",
+            "group",
+            "group_only",
+            "source_group",
+            "origin",
+            "本群",
+            "仅本群",
+            "来源群",
+            "私有",
+            "限定",
+            "群内",
+        }:
+            scope_mode = "local"
+        elif raw_scope in {"public", "global", "all", "shared", "open", "公开", "公共", "全局"}:
+            scope_mode = "public"
+        else:
+            scope_mode = ""
+
+        reason = self._sanitize_model_scalar(
+            data.get("scope_reason") or data.get("privacy_reason") or data.get("reason_scope") or ""
+        )
+        meta: dict[str, str] = {}
+        if scope_mode:
+            meta["scope_mode"] = scope_mode
+        if reason:
+            meta["scope_reason"] = reason
+        return meta
 
     def _sanitize_model_scalar(self, value: Any) -> str:
         """Normalize single-value model outputs before category matching."""

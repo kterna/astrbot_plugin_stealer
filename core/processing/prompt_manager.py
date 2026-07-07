@@ -19,6 +19,16 @@ class PromptManager:
         '返回JSON格式：{"approved": true, "category": "分类名", "tags": ["标签1"], '
         '"description": "画面描述", "scenes": ["场景1"]}'
     )
+    _SCOPE_POLICY_PROMPT = """
+
+<scope_policy>
+同时判断图片作用域，并在 JSON 中输出 "scope_mode" 和 "scope_reason"。
+- scope_mode="local": 仅来源群可用。用于真人/群友/小团体梗图、内部工作或学习资料、聊天截图、证件票据、个人隐私、群内上下文强相关、非通用表情包、无法确认可公开传播的图片。
+- scope_mode="public": 可跨群使用。仅用于通用互联网表情包、公开卡通/动漫/动物/抽象梗图，且不含私人上下文。
+隐私优先：只要不确定是否适合跨群传播，就选择 local。
+输出 JSON 示例字段："scope_mode": "local", "scope_reason": "包含真人或群内上下文"。
+</scope_policy>
+"""
 
     def __init__(self, plugin_instance: Any) -> None:
         self.plugin = plugin_instance
@@ -57,7 +67,10 @@ class PromptManager:
             if use_filter
             else self.emoji_classification_prompt
         )
-        return self._render_prompt_template(template, emotion_list)
+        prompt = self._render_prompt_template(template, emotion_list)
+        if bool(getattr(self.plugin_config, "auto_local_scope_by_vlm", False)):
+            prompt = f"{prompt}{self._SCOPE_POLICY_PROMPT}"
+        return prompt
 
     def _build_emotion_list_str(self, categories: list[str] | None = None) -> str:
         categories = categories if categories is not None else (self.categories or [])
