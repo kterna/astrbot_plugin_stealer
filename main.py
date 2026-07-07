@@ -398,7 +398,8 @@ class Main(Star):
             return
         try:
             if self.plugin_config:
-                self._apply_plugin_config_updates(config_dict)
+                if not self.plugin_config.update_config(config_dict):
+                    self._apply_plugin_config_updates(config_dict)
                 self._sync_all_config()
                 self._sync_image_processor_from_runtime()
                 try:
